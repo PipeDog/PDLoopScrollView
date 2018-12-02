@@ -70,7 +70,6 @@
 
 - (void)dealloc {
     [self invalidate];
-    NSLog(@"[PDLoopScrollView dealloc] -> %@", self);
 }
 
 - (instancetype)init {
