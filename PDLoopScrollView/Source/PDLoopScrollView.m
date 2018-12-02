@@ -26,7 +26,7 @@
 
 - (void)dealloc {
     [self invalidate];
-    NSLog(@"[_PDWeakTimer dealloc] -> %@", self);
+//    NSLog(@"[_PDWeakTimer dealloc] -> %@", self);
 }
 
 + (_PDWeakTimer *)timerWithTimeInterval:(NSTimeInterval)interval repeats:(BOOL)repeats block:(void (^)(void))block {
@@ -63,7 +63,7 @@
 @property (nonatomic, assign, readonly) CGFloat unitLen;
 @property (nonatomic, assign, readonly) CGFloat curOffsetLen;
 @property (nonatomic, assign, readonly) CGFloat contentLen;
-@property (nonatomic, assign) CGFloat nextOffsetLen;
+@property (nonatomic, assign) CGFloat preOffsetLen;
 
 @end
 
@@ -103,9 +103,13 @@
     self.viewModels = [NSArray arrayWithArray:viewModels];
     self.pageControl.numberOfPages = self.viewModels.count;
     [self.collectionView reloadData];
+    
+    [self fire];
 }
 
 - (void)fire {
+    [self invalidate];
+    
     if (self.secs == 0) {
         return;
     }
@@ -114,12 +118,13 @@
     self.timer = [_PDWeakTimer timerWithTimeInterval:self.secs repeats:YES block:^{
         [weakSelf turnPage];
     }];
-    [self.timer fire];
 }
 
 - (void)invalidate {
-    [_timer invalidate];
-    _timer = nil;
+    if (_timer) {
+        [_timer invalidate];
+        _timer = nil;
+    }
 }
 
 #pragma mark - Private Methods
@@ -143,24 +148,26 @@
 }
 
 - (void)turnPage {
-    CGFloat newOffSetLength = self.curOffsetLen + self.unitLen;
-    // 在换页到最后一个的时候多加一点距离，触发回到第一个图片的事件
-    if (newOffSetLength == self.contentLen - self.unitLen) {
-        newOffSetLength += 1;
+    CGFloat newOffsetLen = self.curOffsetLen + self.unitLen;
+    
+    if (newOffsetLen == self.contentLen - self.unitLen) {
+        // Last page, scroll to first page.
+        newOffsetLen += 1;
     }
-    CGPoint offSet;
+    
+    CGPoint offset;
     if (self.scrollDirection == PDLoopScrollViewDirectionHorizontal) {
-        offSet = CGPointMake(newOffSetLength, 0);
+        offset = CGPointMake(newOffsetLen, 0);
     } else {
-        offSet = CGPointMake(0, newOffSetLength);
+        offset = CGPointMake(0, newOffsetLen);
     }
-    [self.collectionView setContentOffset:offSet animated:YES];
-    // 修复在滚动动画进行中切换tabbar或push一个新的controller时导致图片显示错位问题。
-    // 原因：系统会在view not-on-screen时移除所有coreAnimation动画，导致动画无法完成，轮播图停留在切换中间的状态。
+    [self.collectionView setContentOffset:offset animated:YES];
+    
+    // Fix: Switch TabBar or Navigation Push Error.
+    // Reason: The system will remove all coreAnimation animations in the view not-on-screen, so that the animation cannot be completed and the rotations stay in the state of switching.
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        // 动画完成后的实际offset和应该到达的offset不一致，重置offset。
-        if (self.curOffsetLen != newOffSetLength && self.curOffsetLen != 0) {
-            self.collectionView.contentOffset = offSet;
+        if (self.curOffsetLen != newOffsetLen && self.curOffsetLen != 0) {
+            self.collectionView.contentOffset = offset;
         }
     });
 }
@@ -217,13 +224,13 @@
 }
 
 - (void)scrollViewDidEndDragging:(UIScrollView *)scrollView willDecelerate:(BOOL)decelerate {
-	self.pageControl.currentPage = self.curOffsetLen / self.unitLen;
+    self.pageControl.currentPage = self.curOffsetLen / self.unitLen;
     [self fire];
 }
 
-- (void)scrollVxiewDidScroll:(UIScrollView *)scrollView {
+- (void)scrollViewDidScroll:(UIScrollView *)scrollView {
     UICollectionView *collectionView = (UICollectionView *)scrollView;
-    if (self.nextOffsetLen > self.curOffsetLen) {
+    if (self.preOffsetLen > self.curOffsetLen) {
         if (self.curOffsetLen < 0) {
             [collectionView scrollToItemAtIndexPath:[NSIndexPath indexPathForRow:self.viewModels.count inSection:0] atScrollPosition:UICollectionViewScrollPositionNone animated:NO];
         }
@@ -232,13 +239,13 @@
             [collectionView scrollToItemAtIndexPath:[NSIndexPath indexPathForRow:0 inSection:0] atScrollPosition:UICollectionViewScrollPositionNone animated:NO];
         }
     }
-    // Last page scrollView to next page, set pageControl.currentPage = 0
+    
     if (round(self.curOffsetLen / self.unitLen) >= self.pageControl.numberOfPages) {
         self.pageControl.currentPage = 0;
     } else {
         self.pageControl.currentPage = self.curOffsetLen / self.unitLen;
     }
-    self.nextOffsetLen = self.curOffsetLen;
+    self.preOffsetLen = self.curOffsetLen;
 }
 
 #pragma mark - Getter Methods
@@ -262,7 +269,7 @@
 
 - (UICollectionViewFlowLayout *)flowLayout {
     if (!_flowLayout) {
-        _flowLayout = [[UICollectionViewFlowLayout alloc]init];
+        _flowLayout = [[UICollectionViewFlowLayout alloc] init];
         _flowLayout.scrollDirection = UICollectionViewScrollDirectionHorizontal;
         _flowLayout.minimumInteritemSpacing = 0;
         _flowLayout.minimumLineSpacing = 0;
@@ -321,15 +328,6 @@
 - (void)setScrollEnabled:(BOOL)scrollEnabled {
     _scrollEnabled = scrollEnabled;
     self.collectionView.scrollEnabled = _scrollEnabled;
-}
-
-- (void)setSecs:(NSTimeInterval)secs {
-    _secs = secs;
-    
-    [self invalidate];
-    if (secs != 0) {
-        [self fire];
-    }
 }
 
 - (void)setHidePageControl:(BOOL)hidePageControl {

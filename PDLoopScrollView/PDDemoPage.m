@@ -23,6 +23,11 @@
     // Do any additional setup after loading the view.
     self.view.backgroundColor = [UIColor whiteColor];
     
+    [self.view addSubview:self.scrollView];
+}
+
+- (void)viewDidAppear:(BOOL)animated {
+    [super viewDidAppear:animated];
     [self.scrollView reloadData];
 }
 
@@ -52,7 +57,6 @@
         _scrollView.delegate = self;
         _scrollView.secs = 3.f;
         _scrollView.scrollEnabled = YES;
-        [self.view addSubview:_scrollView];
     }
     return _scrollView;
 }
