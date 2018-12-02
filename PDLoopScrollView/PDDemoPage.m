@@ -23,26 +23,26 @@
     // Do any additional setup after loading the view.
     self.view.backgroundColor = [UIColor whiteColor];
     
-    [self.view addSubview:self.scrollView];
-}
-
-- (void)viewDidAppear:(BOOL)animated {
-    [super viewDidAppear:animated];
     [self.scrollView reloadData];
 }
 
 #pragma mark - PDLoopScrollViewDelegate Methods
 - (UIView *)scrollView:(PDLoopScrollView *)scrollView viewForViewModel:(id)viewModel {
+    NSArray *dataSource = (NSArray *)viewModel;
+    
     UILabel *label = [[UILabel alloc] init];
-    label.text = (NSString *)viewModel;
+    label.text = dataSource[0];
     label.textColor = [UIColor darkGrayColor];
     label.textAlignment = NSTextAlignmentCenter;
-    label.backgroundColor = [UIColor brownColor];
+    label.backgroundColor = dataSource[1];
     return label;
 }
 
 - (NSArray *)viewModelsForScrollView:(PDLoopScrollView *)scrollView {
-    return @[@"111", @"222", @"333", @"444"];
+    return @[@[@"111", [UIColor magentaColor]],
+             @[@"222", [UIColor blueColor]],
+             @[@"333", [UIColor yellowColor]],
+             @[@"444", [UIColor cyanColor]]];
 }
 
 - (void)scrollView:(PDLoopScrollView *)scrollView didSelectItemOfViewModel:(id)viewModel {
@@ -55,8 +55,10 @@
         _scrollView = [[PDLoopScrollView alloc] initWithFrame:CGRectMake(20, 100, CGRectGetWidth(self.view.frame) - 40, 150)];
         _scrollView.backgroundColor = [UIColor lightGrayColor];
         _scrollView.delegate = self;
-        _scrollView.secs = 3.f;
+        _scrollView.secs = 2.f;
         _scrollView.scrollEnabled = YES;
+        _scrollView.scrollDirection = PDLoopScrollViewDirectionVertical;
+        [self.view addSubview:_scrollView];
     }
     return _scrollView;
 }

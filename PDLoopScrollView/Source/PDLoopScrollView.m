@@ -26,7 +26,6 @@
 
 - (void)dealloc {
     [self invalidate];
-//    NSLog(@"[_PDWeakTimer dealloc] -> %@", self);
 }
 
 + (_PDWeakTimer *)timerWithTimeInterval:(NSTimeInterval)interval repeats:(BOOL)repeats block:(void (^)(void))block {
@@ -57,9 +56,9 @@
 
 @property (nonatomic, strong) NSArray *viewModels;
 @property (nonatomic, strong) UICollectionView *collectionView;
+@property (nonatomic, strong) UICollectionViewFlowLayout *flowLayout;
 @property (nonatomic, strong) UIPageControl *pageControl;
 @property (nonatomic, strong) _PDWeakTimer *timer;
-@property (nonatomic, strong) UICollectionViewFlowLayout *flowLayout;
 @property (nonatomic, assign, readonly) CGFloat unitLen;
 @property (nonatomic, assign, readonly) CGFloat curOffsetLen;
 @property (nonatomic, assign, readonly) CGFloat contentLen;
