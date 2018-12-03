@@ -234,11 +234,14 @@
     
     id viewModel = [self viewModelForIndexPath:indexPath];
     UIView *view = [self.delegate scrollView:self viewForViewModel:viewModel];
-    [cell addSubview:view];
     
-    [view mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.edges.equalTo(cell);
-    }];
+    if (view) {
+        [cell addSubview:view];
+        
+        [view mas_makeConstraints:^(MASConstraintMaker *make) {
+            make.edges.equalTo(cell);
+        }];
+    }
 	return cell;
 }
 

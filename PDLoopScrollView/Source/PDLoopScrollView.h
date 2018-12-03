@@ -19,12 +19,10 @@ typedef NS_ENUM(NSUInteger, PDLoopScrollViewDirection) {
 
 @protocol PDLoopScrollViewDelegate <NSObject>
 
-- (UIView *)scrollView:(PDLoopScrollView *)scrollView viewForViewModel:(id)viewModel;
-
+- (nullable UIView *)scrollView:(PDLoopScrollView *)scrollView viewForViewModel:(id)viewModel;
 - (NSArray *)viewModelsForScrollView:(PDLoopScrollView *)scrollView;
 
 @optional
-
 - (void)scrollView:(PDLoopScrollView *)scrollView didSelectItemOfViewModel:(id)viewModel;
 
 @end
@@ -33,8 +31,8 @@ typedef NS_ENUM(NSUInteger, PDLoopScrollViewDirection) {
 
 @property (nonatomic) CGRect frame;
 @property (nonatomic, getter=isHidden) BOOL hidden;
-@property (nonatomic, strong) UIColor *pageIndicatorTintColor;
-@property (nonatomic, strong) UIColor *currentPageIndicatorTintColor;
+@property (nonatomic, strong, nullable) UIColor *pageIndicatorTintColor;
+@property (nonatomic, strong, nullable) UIColor *currentPageIndicatorTintColor;
 
 @end
 
