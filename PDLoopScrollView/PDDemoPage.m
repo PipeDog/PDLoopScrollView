@@ -59,6 +59,13 @@
         _scrollView.scrollEnabled = YES;
         _scrollView.scrollDirection = PDLoopScrollViewDirectionVertical;
         [self.view addSubview:_scrollView];
+        
+        [_scrollView configPageControl:^(PDLoopScrollViewPageControlConfiguration * _Nonnull configuration) {
+            configuration.frame = CGRectMake(0, 10, CGRectGetWidth(self->_scrollView.frame), 30);
+            configuration.hidden = NO;
+            configuration.currentPageIndicatorTintColor = [UIColor blackColor];
+            configuration.pageIndicatorTintColor = [UIColor whiteColor];
+        }];
     }
     return _scrollView;
 }

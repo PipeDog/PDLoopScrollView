@@ -29,6 +29,15 @@ typedef NS_ENUM(NSUInteger, PDLoopScrollViewDirection) {
 
 @end
 
+@interface PDLoopScrollViewPageControlConfiguration : NSObject
+
+@property (nonatomic) CGRect frame;
+@property (nonatomic, getter=isHidden) BOOL hidden;
+@property (nonatomic, strong) UIColor *pageIndicatorTintColor;
+@property (nonatomic, strong) UIColor *currentPageIndicatorTintColor;
+
+@end
+
 @interface PDLoopScrollView : UIView
 
 @property (nonatomic, weak) id<PDLoopScrollViewDelegate> delegate;
@@ -39,8 +48,8 @@ typedef NS_ENUM(NSUInteger, PDLoopScrollViewDirection) {
 @property (nonatomic, assign, getter=isScrollEnabled) BOOL scrollEnabled;
 // Default is PDLoopScrollViewDirectionHorizontal.
 @property (nonatomic, assign) PDLoopScrollViewDirection scrollDirection;
-// Default is NO.
-@property (nonatomic, assign) BOOL hidePageControl;
+
+- (void)configPageControl:(void (^)(PDLoopScrollViewPageControlConfiguration *configuration))block;
 
 - (void)reloadData;
 

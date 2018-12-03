@@ -52,6 +52,10 @@
 
 @end
 
+@implementation PDLoopScrollViewPageControlConfiguration
+
+@end
+
 @interface PDLoopScrollView () <UIScrollViewDelegate, UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout>
 
 @property (nonatomic, strong) NSArray *viewModels;
@@ -63,6 +67,7 @@
 @property (nonatomic, assign, readonly) CGFloat curOffsetLen;
 @property (nonatomic, assign, readonly) CGFloat contentLen;
 @property (nonatomic, assign) CGFloat preOffsetLen;
+@property (nonatomic, strong) PDLoopScrollViewPageControlConfiguration *pageControlConfiguration;
 
 @end
 
@@ -101,28 +106,14 @@
     self.viewModels = [NSArray arrayWithArray:viewModels];
     self.pageControl.numberOfPages = self.viewModels.count;
     [self.collectionView reloadData];
-    
+
+    [self makePageControlConfig];
     [self fire];
 }
 
-- (void)fire {
-    [self invalidate];
-    
-    if (self.secs == 0) {
-        return;
-    }
-    
-    __weak typeof(self) weakSelf = self;
-    self.timer = [_PDWeakTimer timerWithTimeInterval:self.secs repeats:YES block:^{
-        [weakSelf turnPage];
-    }];
-}
-
-- (void)invalidate {
-    if (_timer) {
-        [_timer invalidate];
-        _timer = nil;
-    }
+- (void)configPageControl:(void (^)(PDLoopScrollViewPageControlConfiguration * _Nonnull))block {
+    PDLoopScrollViewPageControlConfiguration *configuration = [[PDLoopScrollViewPageControlConfiguration alloc] init];
+    !block ?: block(self.pageControlConfiguration = configuration);
 }
 
 #pragma mark - Private Methods
@@ -138,11 +129,33 @@
 		make.top.left.bottom.and.right.equalTo(self);
 	}];
 	
-	[self.pageControl mas_makeConstraints:^(MASConstraintMaker *make) {
-		make.height.mas_equalTo(25);
-		make.bottom.equalTo(self);
-		make.centerX.equalTo(self);
-	}];
+    [self.pageControl mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.height.mas_equalTo(25);
+        make.bottom.equalTo(self);
+        make.centerX.equalTo(self);
+    }];
+}
+
+- (void)makePageControlConfig {
+    PDLoopScrollViewPageControlConfiguration *configuration = self.pageControlConfiguration;
+    if (!configuration) { return; }
+    
+    if (!CGRectEqualToRect(configuration.frame, CGRectZero)) {
+        [self.pageControl mas_remakeConstraints:^(MASConstraintMaker *make) {
+            make.top.mas_equalTo(configuration.frame.origin.y);
+            make.left.mas_equalTo(configuration.frame.origin.x);
+            make.size.mas_equalTo(configuration.frame.size);
+        }];
+    }
+    
+    self.pageControl.hidden = configuration.hidden;
+    
+    if (configuration.currentPageIndicatorTintColor) {
+        self.pageControl.currentPageIndicatorTintColor = configuration.currentPageIndicatorTintColor;
+    }
+    if (configuration.pageIndicatorTintColor) {
+        self.pageControl.pageIndicatorTintColor = configuration.pageIndicatorTintColor;
+    }
 }
 
 - (void)turnPage {
@@ -168,6 +181,26 @@
             self.collectionView.contentOffset = offset;
         }
     });
+}
+
+- (void)fire {
+    [self invalidate];
+    
+    if (self.secs == 0) {
+        return;
+    }
+    
+    __weak typeof(self) weakSelf = self;
+    self.timer = [_PDWeakTimer timerWithTimeInterval:self.secs repeats:YES block:^{
+        [weakSelf turnPage];
+    }];
+}
+
+- (void)invalidate {
+    if (_timer) {
+        [_timer invalidate];
+        _timer = nil;
+    }
 }
 
 - (id)viewModelForIndexPath:(NSIndexPath *)indexPath {
@@ -326,11 +359,6 @@
 - (void)setScrollEnabled:(BOOL)scrollEnabled {
     _scrollEnabled = scrollEnabled;
     self.collectionView.scrollEnabled = _scrollEnabled;
-}
-
-- (void)setHidePageControl:(BOOL)hidePageControl {
-    _hidePageControl = hidePageControl;
-    self.pageControl.hidden = _hidePageControl;
 }
 
 @end
