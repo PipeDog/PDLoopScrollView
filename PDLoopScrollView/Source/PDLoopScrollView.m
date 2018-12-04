@@ -114,6 +114,8 @@
 - (void)configPageControl:(void (^)(PDLoopScrollViewPageControlConfiguration * _Nonnull))block {
     PDLoopScrollViewPageControlConfiguration *configuration = [[PDLoopScrollViewPageControlConfiguration alloc] init];
     !block ?: block(self.pageControlConfiguration = configuration);
+    
+    [self makePageControlConfig];
 }
 
 #pragma mark - Private Methods
