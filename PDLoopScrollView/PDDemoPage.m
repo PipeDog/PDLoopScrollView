@@ -25,7 +25,7 @@
     
     [self.scrollView reloadData];
     
-    [self autoScroll];
+//    [self autoScroll];
 }
 
 - (void)autoScroll {
@@ -71,7 +71,7 @@
         _scrollView = [[PDLoopScrollView alloc] initWithFrame:CGRectMake(20, 100, CGRectGetWidth(self.view.frame) - 40, 150)];
         _scrollView.backgroundColor = [UIColor lightGrayColor];
         _scrollView.delegate = self;
-        _scrollView.secs = 0.f;//2.f;
+        _scrollView.secs = 2.f;
         _scrollView.scrollEnabled = YES;
         _scrollView.scrollDirection = PDLoopScrollViewDirectionVertical;
         [self.view addSubview:_scrollView];
