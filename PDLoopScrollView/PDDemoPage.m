@@ -24,6 +24,18 @@
     self.view.backgroundColor = [UIColor whiteColor];
     
     [self.scrollView reloadData];
+    
+    [self autoScroll];
+}
+
+- (void)autoScroll {
+    static NSInteger page = 0;
+    
+    [self.scrollView scrollToPage:(page % 4) animated:(page % 2)]; page ++;
+    
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        [self autoScroll];
+    });
 }
 
 #pragma mark - PDLoopScrollViewDelegate Methods
@@ -49,13 +61,17 @@
     NSLog(@"viewModel = %@", viewModel);
 }
 
+- (void)scrollView:(PDLoopScrollView *)scrollView didScrollToPage:(NSInteger)page {
+    NSLog(@"page = %zd", page);
+}
+
 #pragma mark - Getter Methods
 - (PDLoopScrollView *)scrollView {
     if (!_scrollView) {
         _scrollView = [[PDLoopScrollView alloc] initWithFrame:CGRectMake(20, 100, CGRectGetWidth(self.view.frame) - 40, 150)];
         _scrollView.backgroundColor = [UIColor lightGrayColor];
         _scrollView.delegate = self;
-        _scrollView.secs = 2.f;
+        _scrollView.secs = 0.f;//2.f;
         _scrollView.scrollEnabled = YES;
         _scrollView.scrollDirection = PDLoopScrollViewDirectionVertical;
         [self.view addSubview:_scrollView];

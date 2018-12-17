@@ -62,6 +62,7 @@
 @property (nonatomic, strong) UICollectionView *collectionView;
 @property (nonatomic, strong) UICollectionViewFlowLayout *flowLayout;
 @property (nonatomic, strong) UIPageControl *pageControl;
+@property (nonatomic, assign) NSInteger currentPage;
 @property (nonatomic, strong) _PDWeakTimer *timer;
 @property (nonatomic, assign, readonly) CGFloat unitLen;
 @property (nonatomic, assign, readonly) CGFloat curOffsetLen;
@@ -100,6 +101,21 @@
 }
 
 #pragma mark - Public Methods
+- (void)configPageControl:(void (^)(PDLoopScrollViewPageControlConfiguration * _Nonnull))block {
+    PDLoopScrollViewPageControlConfiguration *configuration = [[PDLoopScrollViewPageControlConfiguration alloc] init];
+    !block ?: block(self.pageControlConfiguration = configuration);
+    
+    [self makePageControlConfig];
+}
+
+- (void)scrollToPage:(NSInteger)page animated:(BOOL)animated {
+    _currentPage = page; // Do not call setter methods of `currentPage`.
+    self.pageControl.currentPage = page;
+    
+    NSIndexPath *indexPath = [NSIndexPath indexPathForItem:self.currentPage inSection:0];
+    [self.collectionView scrollToItemAtIndexPath:indexPath atScrollPosition:UICollectionViewScrollPositionNone animated:animated];
+}
+
 - (void)reloadData {
     NSArray *viewModels = [self.delegate viewModelsForScrollView:self];
     
@@ -109,13 +125,6 @@
 
     [self makePageControlConfig];
     [self fire];
-}
-
-- (void)configPageControl:(void (^)(PDLoopScrollViewPageControlConfiguration * _Nonnull))block {
-    PDLoopScrollViewPageControlConfiguration *configuration = [[PDLoopScrollViewPageControlConfiguration alloc] init];
-    !block ?: block(self.pageControlConfiguration = configuration);
-    
-    [self makePageControlConfig];
 }
 
 #pragma mark - Private Methods
@@ -260,7 +269,7 @@
 }
 
 - (void)scrollViewDidEndDragging:(UIScrollView *)scrollView willDecelerate:(BOOL)decelerate {
-    self.pageControl.currentPage = self.curOffsetLen / self.unitLen;
+    self.currentPage = self.curOffsetLen / self.unitLen;
     [self fire];
 }
 
@@ -277,9 +286,9 @@
     }
     
     if (round(self.curOffsetLen / self.unitLen) >= self.pageControl.numberOfPages) {
-        self.pageControl.currentPage = 0;
+        self.currentPage = 0;
     } else {
-        self.pageControl.currentPage = self.curOffsetLen / self.unitLen;
+        self.currentPage = self.curOffsetLen / self.unitLen;
     }
     self.preOffsetLen = self.curOffsetLen;
 }
@@ -364,6 +373,15 @@
 - (void)setScrollEnabled:(BOOL)scrollEnabled {
     _scrollEnabled = scrollEnabled;
     self.collectionView.scrollEnabled = _scrollEnabled;
+}
+
+- (void)setCurrentPage:(NSInteger)currentPage {
+    _currentPage = currentPage;
+    self.pageControl.currentPage = _currentPage;
+    
+    if ([self.delegate respondsToSelector:@selector(scrollView:didScrollToPage:)]) {
+        [self.delegate scrollView:self didScrollToPage:_currentPage];
+    }
 }
 
 @end

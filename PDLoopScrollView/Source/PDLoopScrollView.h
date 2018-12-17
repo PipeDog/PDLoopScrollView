@@ -24,6 +24,7 @@ typedef NS_ENUM(NSUInteger, PDLoopScrollViewDirection) {
 
 @optional
 - (void)scrollView:(PDLoopScrollView *)scrollView didSelectItemOfViewModel:(id)viewModel;
+- (void)scrollView:(PDLoopScrollView *)scrollView didScrollToPage:(NSInteger)page;
 
 @end
 
@@ -46,8 +47,12 @@ typedef NS_ENUM(NSUInteger, PDLoopScrollViewDirection) {
 @property (nonatomic, assign, getter=isScrollEnabled) BOOL scrollEnabled;
 // Default is PDLoopScrollViewDirectionHorizontal.
 @property (nonatomic, assign) PDLoopScrollViewDirection scrollDirection;
+// Current page number.
+@property (nonatomic, assign, readonly) NSInteger currentPage;
 
 - (void)configPageControl:(void (^)(PDLoopScrollViewPageControlConfiguration *configuration))block;
+
+- (void)scrollToPage:(NSInteger)page animated:(BOOL)animated;
 
 - (void)reloadData;
 
