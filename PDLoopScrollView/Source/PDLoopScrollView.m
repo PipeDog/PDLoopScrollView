@@ -377,7 +377,7 @@
 
 - (void)setCurrentPage:(NSInteger)currentPage {
     if (_currentPage == currentPage) {
-	return;
+	    return;
     }
     _currentPage = currentPage;
     self.pageControl.currentPage = _currentPage;
