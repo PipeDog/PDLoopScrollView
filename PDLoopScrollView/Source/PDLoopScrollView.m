@@ -269,7 +269,7 @@
 }
 
 - (void)scrollViewDidEndDragging:(UIScrollView *)scrollView willDecelerate:(BOOL)decelerate {
-    self.currentPage = self.curOffsetLen / self.unitLen;
+    // self.currentPage = self.curOffsetLen / self.unitLen;
     [self fire];
 }
 
@@ -376,6 +376,9 @@
 }
 
 - (void)setCurrentPage:(NSInteger)currentPage {
+    if (_currentPage == currentPage) {
+	return;
+    }
     _currentPage = currentPage;
     self.pageControl.currentPage = _currentPage;
     
