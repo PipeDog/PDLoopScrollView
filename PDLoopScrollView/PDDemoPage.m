@@ -25,22 +25,28 @@
     
     [self.scrollView reloadData];
     
-//    [self autoScroll];
+    [self autoScroll];
 }
 
 - (void)autoScroll {
-    static NSInteger page = 0;
-    
-    [self.scrollView scrollToPage:(page % 4) animated:(page % 2)]; page ++;
-    
+    static NSInteger index = 0;
+
+    NSLog(@"%s", __func__);
+    [self.scrollView scrollToIndex:(index % 4) animated:(index % 2)]; index += 2;
+
+    __weak typeof(self) weakSelf = self;
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        [self autoScroll];
+        [weakSelf autoScroll];
     });
 }
 
 #pragma mark - PDLoopScrollViewDelegate Methods
-- (UIView *)scrollView:(PDLoopScrollView *)scrollView viewForViewModel:(id)viewModel {
-    NSArray *dataSource = (NSArray *)viewModel;
+- (NSInteger)numberOfItemsInScrollView:(PDLoopScrollView *)scrollView {
+    return self.dataSource.count;
+}
+
+- (UIView *)scrollView:(PDLoopScrollView *)scrollView cellForItemAtIndex:(NSInteger)index {
+    NSArray *dataSource = self.dataSource[index];
     
     UILabel *label = [[UILabel alloc] init];
     label.text = dataSource[0];
@@ -50,22 +56,22 @@
     return label;
 }
 
-- (NSArray *)viewModelsForScrollView:(PDLoopScrollView *)scrollView {
-    return @[@[@"111", [UIColor magentaColor]],
-             @[@"222", [UIColor blueColor]],
-             @[@"333", [UIColor yellowColor]],
-             @[@"444", [UIColor cyanColor]]];
+- (void)scrollView:(PDLoopScrollView *)scrollView didSelectItemAtIndex:(NSInteger)index {
+    NSLog(@"%s, index = %zd", __func__, index);
 }
 
-- (void)scrollView:(PDLoopScrollView *)scrollView didSelectItemOfViewModel:(id)viewModel {
-    NSLog(@"viewModel = %@", viewModel);
-}
-
-- (void)scrollView:(PDLoopScrollView *)scrollView didScrollToPage:(NSInteger)page {
-    NSLog(@"page = %zd", page);
+- (void)scrollView:(PDLoopScrollView *)scrollView didScrollToIndex:(NSInteger)index {
+    NSLog(@"%s, index = %zd", __func__, index);
 }
 
 #pragma mark - Getter Methods
+- (NSArray *)dataSource {
+    return @[@[@"000", [UIColor magentaColor]],
+             @[@"111", [UIColor blueColor]],
+             @[@"222", [UIColor yellowColor]],
+             @[@"333", [UIColor cyanColor]]];
+}
+
 - (PDLoopScrollView *)scrollView {
     if (!_scrollView) {
         _scrollView = [[PDLoopScrollView alloc] initWithFrame:CGRectMake(20, 100, CGRectGetWidth(self.view.frame) - 40, 150)];

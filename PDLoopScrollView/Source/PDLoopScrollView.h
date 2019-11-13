@@ -19,12 +19,12 @@ typedef NS_ENUM(NSUInteger, PDLoopScrollViewDirection) {
 
 @protocol PDLoopScrollViewDelegate <NSObject>
 
-- (nullable UIView *)scrollView:(PDLoopScrollView *)scrollView viewForViewModel:(id)viewModel;
-- (NSArray *)viewModelsForScrollView:(PDLoopScrollView *)scrollView;
+- (NSInteger)numberOfItemsInScrollView:(PDLoopScrollView *)scrollView;
+- (nullable UIView *)scrollView:(PDLoopScrollView *)scrollView cellForItemAtIndex:(NSInteger)index;
 
 @optional
-- (void)scrollView:(PDLoopScrollView *)scrollView didSelectItemOfViewModel:(id)viewModel;
-- (void)scrollView:(PDLoopScrollView *)scrollView didScrollToPage:(NSInteger)page;
+- (void)scrollView:(PDLoopScrollView *)scrollView didSelectItemAtIndex:(NSInteger)index;
+- (void)scrollView:(PDLoopScrollView *)scrollView didScrollToIndex:(NSInteger)index;
 
 @end
 
@@ -48,11 +48,11 @@ typedef NS_ENUM(NSUInteger, PDLoopScrollViewDirection) {
 // Default is PDLoopScrollViewDirectionHorizontal.
 @property (nonatomic, assign) PDLoopScrollViewDirection scrollDirection;
 // Current page number.
-@property (nonatomic, assign, readonly) NSInteger currentPage;
+@property (nonatomic, assign, readonly) NSInteger currentIndex;
 
 - (void)configPageControl:(void (^)(PDLoopScrollViewPageControlConfiguration *configuration))block;
 
-- (void)scrollToPage:(NSInteger)page animated:(BOOL)animated;
+- (void)scrollToIndex:(NSInteger)index animated:(BOOL)animated;
 
 - (void)reloadData;
 

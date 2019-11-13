@@ -32,7 +32,7 @@
     _PDWeakTimer *weakTimer = [[_PDWeakTimer alloc] init];
     weakTimer->_block = [block copy];
     weakTimer->_timer = [NSTimer timerWithTimeInterval:interval target:weakTimer selector:@selector(tick:) userInfo:nil repeats:repeats];
-    [[NSRunLoop currentRunLoop] addTimer:weakTimer->_timer forMode:NSRunLoopCommonModes];
+    [[NSRunLoop mainRunLoop] addTimer:weakTimer->_timer forMode:NSRunLoopCommonModes];
     return weakTimer;
 }
 
@@ -58,11 +58,11 @@
 
 @interface PDLoopScrollView () <UIScrollViewDelegate, UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout>
 
-@property (nonatomic, strong) NSArray *viewModels;
+@property (nonatomic, assign) NSInteger numberOfItems;
 @property (nonatomic, strong) UICollectionView *collectionView;
 @property (nonatomic, strong) UICollectionViewFlowLayout *flowLayout;
 @property (nonatomic, strong) UIPageControl *pageControl;
-@property (nonatomic, assign) NSInteger currentPage;
+@property (nonatomic, assign) NSInteger currentIndex;
 @property (nonatomic, strong) _PDWeakTimer *timer;
 @property (nonatomic, assign, readonly) CGFloat unitLen;
 @property (nonatomic, assign, readonly) CGFloat curOffsetLen;
@@ -108,19 +108,26 @@
     [self makePageControlConfig];
 }
 
-- (void)scrollToPage:(NSInteger)page animated:(BOOL)animated {
-    _currentPage = page; // Do not call setter methods of `currentPage`.
-    self.pageControl.currentPage = page;
+- (void)scrollToIndex:(NSInteger)index animated:(BOOL)animated {
+    [self invalidate];
     
-    NSIndexPath *indexPath = [NSIndexPath indexPathForItem:self.currentPage inSection:0];
+    _currentIndex = index; // Do not call setter methods of `currentIndex`.
+    self.pageControl.currentPage = index;
+    
+    if (!animated && [self.delegate respondsToSelector:@selector(scrollView:didScrollToIndex:)]) {
+        [self.delegate scrollView:self didScrollToIndex:_currentIndex];
+    }
+    
+    NSIndexPath *indexPath = [NSIndexPath indexPathForItem:self.currentIndex inSection:0];
     [self.collectionView scrollToItemAtIndexPath:indexPath atScrollPosition:UICollectionViewScrollPositionNone animated:animated];
+    
+    [self fire];
 }
 
 - (void)reloadData {
-    NSArray *viewModels = [self.delegate viewModelsForScrollView:self];
+    self.numberOfItems = [self.delegate numberOfItemsInScrollView:self];
     
-    self.viewModels = [NSArray arrayWithArray:viewModels];
-    self.pageControl.numberOfPages = self.viewModels.count;
+    self.pageControl.numberOfPages = self.numberOfItems;
     [self.collectionView reloadData];
 
     [self makePageControlConfig];
@@ -214,22 +221,22 @@
     }
 }
 
-- (id)viewModelForIndexPath:(NSIndexPath *)indexPath {
-    if (!self.viewModels.count) {
-        return nil;
+- (NSInteger)convertIndexWithIndexPath:(NSIndexPath *)indexPath {
+    if (!self.numberOfItems) {
+        return 0;
     }
-    if (indexPath.row >= self.viewModels.count) {
-        return self.viewModels.firstObject;
+    if (indexPath.row >= self.numberOfItems) {
+        return 0;
     }
-    return self.viewModels[indexPath.row];
+    return indexPath.item;
 }
 
 #pragma mark - UICollectionView Protocols
 - (NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section {
-    if (self.viewModels.count == 1) {
+    if (self.numberOfItems == 1) {
         return 1;
     }
-    return self.viewModels.count + 1;
+    return self.numberOfItems + 1;
 }
 
 - (CGSize)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout sizeForItemAtIndexPath:(NSIndexPath *)indexPath {
@@ -242,9 +249,9 @@
     for (UIView *subview in [cell.subviews copy]) {
         [subview removeFromSuperview];
     }
-    
-    id viewModel = [self viewModelForIndexPath:indexPath];
-    UIView *view = [self.delegate scrollView:self viewForViewModel:viewModel];
+
+    NSInteger index = [self convertIndexWithIndexPath:indexPath];
+    UIView *view = [self.delegate scrollView:self cellForItemAtIndex:index];
     
     if (view) {
         [cell addSubview:view];
@@ -257,9 +264,9 @@
 }
 
 - (void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath {
-    if ([self.delegate respondsToSelector:@selector(scrollView:didSelectItemOfViewModel:)]) {
-        id viewModel = self.viewModels[self.pageControl.currentPage];
-        [self.delegate scrollView:self didSelectItemOfViewModel:viewModel];
+    if ([self.delegate respondsToSelector:@selector(scrollView:didSelectItemAtIndex:)]) {
+        NSInteger index = self.pageControl.currentPage;
+        [self.delegate scrollView:self didSelectItemAtIndex:index];
     }
 }
 
@@ -269,7 +276,6 @@
 }
 
 - (void)scrollViewDidEndDragging:(UIScrollView *)scrollView willDecelerate:(BOOL)decelerate {
-    // self.currentPage = self.curOffsetLen / self.unitLen;
     [self fire];
 }
 
@@ -277,7 +283,7 @@
     UICollectionView *collectionView = (UICollectionView *)scrollView;
     if (self.preOffsetLen > self.curOffsetLen) {
         if (self.curOffsetLen < 0) {
-            [collectionView scrollToItemAtIndexPath:[NSIndexPath indexPathForRow:self.viewModels.count inSection:0] atScrollPosition:UICollectionViewScrollPositionNone animated:NO];
+            [collectionView scrollToItemAtIndexPath:[NSIndexPath indexPathForRow:self.numberOfItems inSection:0] atScrollPosition:UICollectionViewScrollPositionNone animated:NO];
         }
     } else {
         if (self.curOffsetLen > self.contentLen - self.unitLen) {
@@ -286,9 +292,9 @@
     }
     
     if (round(self.curOffsetLen / self.unitLen) >= self.pageControl.numberOfPages) {
-        self.currentPage = 0;
+        self.currentIndex = 0;
     } else {
-        self.currentPage = self.curOffsetLen / self.unitLen;
+        self.currentIndex = self.curOffsetLen / self.unitLen;
     }
     self.preOffsetLen = self.curOffsetLen;
 }
@@ -327,7 +333,7 @@
     if (!_pageControl) {
         _pageControl = [[UIPageControl alloc] init];
         _pageControl.currentPage = 0;
-        _pageControl.numberOfPages = self.viewModels.count;
+        _pageControl.numberOfPages = self.numberOfItems;
         _pageControl.backgroundColor = [UIColor clearColor];
         _pageControl.currentPageIndicatorTintColor = [UIColor whiteColor];
         _pageControl.pageIndicatorTintColor = [UIColor lightGrayColor];
@@ -353,9 +359,9 @@
 #pragma mark - Setter Methods
 - (void)setDelegate:(id<PDLoopScrollViewDelegate>)delegate {
     _delegate = delegate;
-
-    NSAssert([_delegate respondsToSelector:@selector(scrollView:viewForViewModel:)], @"Method [- scrollView:viewForViewModel:] must be impl");
-    NSAssert([_delegate respondsToSelector:@selector(viewModelsForScrollView:)], @"Method [- viewModelsForScrollView:] must be impl");
+    
+    NSAssert([_delegate respondsToSelector:@selector(numberOfItemsInScrollView:)], @"Method [- numberOfItemsInScrollView:] must be impl.");
+    NSAssert([_delegate respondsToSelector:@selector(scrollView:cellForItemAtIndex:)], @"Method [- scrollView:cellForItemAtIndex:] must be impl.");
 }
 
 - (void)setScrollDirection:(PDLoopScrollViewDirection)scrollDirection {
@@ -375,15 +381,15 @@
     self.collectionView.scrollEnabled = _scrollEnabled;
 }
 
-- (void)setCurrentPage:(NSInteger)currentPage {
-    if (_currentPage == currentPage) {
-	    return;
+- (void)setCurrentIndex:(NSInteger)currentIndex {
+    if (_currentIndex == currentIndex) {
+        return;
     }
-    _currentPage = currentPage;
-    self.pageControl.currentPage = _currentPage;
+    _currentIndex = currentIndex;
+    self.pageControl.currentPage = _currentIndex;
     
-    if ([self.delegate respondsToSelector:@selector(scrollView:didScrollToPage:)]) {
-        [self.delegate scrollView:self didScrollToPage:_currentPage];
+    if ([self.delegate respondsToSelector:@selector(scrollView:didScrollToIndex:)]) {
+        [self.delegate scrollView:self didScrollToIndex:_currentIndex];
     }
 }
 
