@@ -25,7 +25,7 @@
     
     [self.scrollView reloadData];
     
-    [self autoScroll];
+//    [self autoScroll];
 }
 
 - (void)autoScroll {
@@ -79,10 +79,10 @@
         _scrollView.delegate = self;
         _scrollView.secs = 2.f;
         _scrollView.scrollEnabled = YES;
-        _scrollView.scrollDirection = PDLoopScrollViewDirectionVertical;
+        _scrollView.scrollDirection = PDLoopScrollViewDirectionHorizontal;
         [self.view addSubview:_scrollView];
         
-        [_scrollView configPageControl:^(PDLoopScrollViewPageControlConfiguration * _Nonnull configuration) {
+        [_scrollView configPageControl:^(id<PDLoopScrollViewPageControlConfiguration>  _Nonnull configuration) {
             configuration.frame = CGRectMake(0, 10, CGRectGetWidth(self->_scrollView.frame), 30);
             configuration.hidden = NO;
             configuration.currentPageIndicatorTintColor = [UIColor blackColor];

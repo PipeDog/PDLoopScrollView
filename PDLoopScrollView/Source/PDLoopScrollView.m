@@ -52,7 +52,17 @@
 
 @end
 
-@implementation PDLoopScrollViewPageControlConfiguration
+
+@interface _PDLoopScrollViewPageControlConfiguration : NSObject <PDLoopScrollViewPageControlConfiguration>
+
+@end
+
+@implementation _PDLoopScrollViewPageControlConfiguration
+
+@synthesize frame = _frame;
+@synthesize hidden = _hidden;
+@synthesize pageIndicatorTintColor = _pageIndicatorTintColor;
+@synthesize currentPageIndicatorTintColor = _currentPageIndicatorTintColor;
 
 @end
 
@@ -68,7 +78,7 @@
 @property (nonatomic, assign, readonly) CGFloat curOffsetLen;
 @property (nonatomic, assign, readonly) CGFloat contentLen;
 @property (nonatomic, assign) CGFloat preOffsetLen;
-@property (nonatomic, strong) PDLoopScrollViewPageControlConfiguration *pageControlConfiguration;
+@property (nonatomic, strong) _PDLoopScrollViewPageControlConfiguration *pageControlConfiguration;
 
 @end
 
@@ -101,8 +111,13 @@
 }
 
 #pragma mark - Public Methods
-- (void)configPageControl:(void (^)(PDLoopScrollViewPageControlConfiguration * _Nonnull))block {
-    PDLoopScrollViewPageControlConfiguration *configuration = [[PDLoopScrollViewPageControlConfiguration alloc] init];
+- (void)configPageControl:(void (^)(id<PDLoopScrollViewPageControlConfiguration> _Nonnull))block {
+    _PDLoopScrollViewPageControlConfiguration *configuration = [[_PDLoopScrollViewPageControlConfiguration alloc] init];
+    configuration.frame = CGRectMake(0, CGRectGetHeight(self.frame) - 30.f, CGRectGetWidth(self.frame), 30.f);
+    configuration.hidden = NO;
+    configuration.pageIndicatorTintColor = [UIColor lightGrayColor];
+    configuration.currentPageIndicatorTintColor = [UIColor whiteColor];
+    
     !block ?: block(self.pageControlConfiguration = configuration);
     
     [self makePageControlConfig];
@@ -155,7 +170,7 @@
 }
 
 - (void)makePageControlConfig {
-    PDLoopScrollViewPageControlConfiguration *configuration = self.pageControlConfiguration;
+    _PDLoopScrollViewPageControlConfiguration *configuration = self.pageControlConfiguration;
     if (!configuration) { return; }
     
     if (!CGRectEqualToRect(configuration.frame, CGRectZero)) {
@@ -193,7 +208,7 @@
     [self.collectionView setContentOffset:offset animated:YES];
     
     // Fix: Switch TabBar or Navigation Push Error.
-    // Reason: The system will remove all coreAnimation animations in the view not-on-screen, so that the animation cannot be completed and the rotations stay in the state of switching.
+    // Reason: The system will remove all CoreAnimation animations in the view not-on-screen, so that the animation cannot be completed and the rotations stay in the state of switching.
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         if (self.curOffsetLen != newOffsetLen && self.curOffsetLen != 0) {
             self.collectionView.contentOffset = offset;

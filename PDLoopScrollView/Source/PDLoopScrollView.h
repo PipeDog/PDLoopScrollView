@@ -20,7 +20,7 @@ typedef NS_ENUM(NSUInteger, PDLoopScrollViewDirection) {
 @protocol PDLoopScrollViewDelegate <NSObject>
 
 - (NSInteger)numberOfItemsInScrollView:(PDLoopScrollView *)scrollView;
-- (nullable UIView *)scrollView:(PDLoopScrollView *)scrollView cellForItemAtIndex:(NSInteger)index;
+- (nullable __kindof UIView *)scrollView:(PDLoopScrollView *)scrollView cellForItemAtIndex:(NSInteger)index;
 
 @optional
 - (void)scrollView:(PDLoopScrollView *)scrollView didSelectItemAtIndex:(NSInteger)index;
@@ -28,7 +28,7 @@ typedef NS_ENUM(NSUInteger, PDLoopScrollViewDirection) {
 
 @end
 
-@interface PDLoopScrollViewPageControlConfiguration : NSObject
+@protocol PDLoopScrollViewPageControlConfiguration <NSObject>
 
 @property (nonatomic) CGRect frame;
 @property (nonatomic, getter=isHidden) BOOL hidden;
@@ -50,7 +50,7 @@ typedef NS_ENUM(NSUInteger, PDLoopScrollViewDirection) {
 // Current page number.
 @property (nonatomic, assign, readonly) NSInteger currentIndex;
 
-- (void)configPageControl:(void (^)(PDLoopScrollViewPageControlConfiguration *configuration))block;
+- (void)configPageControl:(void (^)(id<PDLoopScrollViewPageControlConfiguration> configuration))block;
 
 - (void)scrollToIndex:(NSInteger)index animated:(BOOL)animated;
 
