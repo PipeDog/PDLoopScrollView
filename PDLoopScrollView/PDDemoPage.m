@@ -10,8 +10,9 @@
 #import "PDLoopScrollView.h"
 #import <Masonry/Masonry.h>
 
-@interface PDDemoPage () <PDLoopScrollViewDelegate>
+@interface PDDemoPage () <PDLoopScrollViewDataSource, PDLoopScrollViewDelegate>
 
+@property (nonatomic, strong) UIView<PDLoopScrollViewPageControl> *pageControl;
 @property (nonatomic, strong) PDLoopScrollView *scrollView;
 
 @end
@@ -23,21 +24,28 @@
     // Do any additional setup after loading the view.
     self.view.backgroundColor = [UIColor whiteColor];
     
+    [self createViewHierarchy];
+    [self layoutContentViews];
     [self.scrollView reloadData];
-    
-//    [self autoScroll];
 }
 
-- (void)autoScroll {
-    static NSInteger index = 0;
+- (void)createViewHierarchy {
+    [self.view addSubview:self.scrollView];
+    [self.scrollView addSubview:self.pageControl];
+}
 
-    NSLog(@"%s", __func__);
-    [self.scrollView scrollToIndex:(index % 4) animated:(index % 2)]; index += 2;
-
-    __weak typeof(self) weakSelf = self;
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        [weakSelf autoScroll];
-    });
+- (void)layoutContentViews {
+    [self.scrollView mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.top.mas_equalTo(100.f);
+        make.left.mas_equalTo(20.f);
+        make.height.mas_equalTo(150.f);
+        make.right.equalTo(self.view.mas_right).offset(-20.f);
+    }];
+    
+    [self.pageControl mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.height.mas_equalTo(40.f);
+        make.left.bottom.and.right.equalTo(self.scrollView);
+    }];
 }
 
 #pragma mark - PDLoopScrollViewDelegate Methods
@@ -77,19 +85,23 @@
         _scrollView = [[PDLoopScrollView alloc] initWithFrame:CGRectMake(20, 100, CGRectGetWidth(self.view.frame) - 40, 150)];
         _scrollView.backgroundColor = [UIColor lightGrayColor];
         _scrollView.delegate = self;
+        _scrollView.dataSource = self;
         _scrollView.secs = 2.f;
         _scrollView.scrollEnabled = YES;
         _scrollView.scrollDirection = PDLoopScrollViewDirectionHorizontal;
-        [self.view addSubview:_scrollView];
-        
-        [_scrollView configPageControl:^(id<PDLoopScrollViewPageControlConfiguration>  _Nonnull configuration) {
-            configuration.frame = CGRectMake(0, 10, CGRectGetWidth(self->_scrollView.frame), 30);
-            configuration.hidden = NO;
-            configuration.currentPageIndicatorTintColor = [UIColor blackColor];
-            configuration.pageIndicatorTintColor = [UIColor whiteColor];
-        }];
+        _scrollView.pageControl = self.pageControl;
     }
     return _scrollView;
+}
+
+- (UIView<PDLoopScrollViewPageControl> *)pageControl {
+    if (!_pageControl) {
+        UIPageControl *pageControl = [[UIPageControl alloc] init];
+        pageControl.hidesForSinglePage = YES;
+        
+        _pageControl = (UIView<PDLoopScrollViewPageControl> *)pageControl;
+    }
+    return _pageControl;
 }
 
 @end

@@ -12,33 +12,17 @@ NS_ASSUME_NONNULL_BEGIN
 
 @class PDLoopScrollView;
 
+@protocol PDLoopScrollViewPageControl;
+@protocol PDLoopScrollViewDataSource, PDLoopScrollViewDelegate;
+
 typedef NS_ENUM(NSUInteger, PDLoopScrollViewDirection) {
     PDLoopScrollViewDirectionHorizontal = 0,
     PDLoopScrollViewDirectionVertical
 };
 
-@protocol PDLoopScrollViewDelegate <NSObject>
-
-- (NSInteger)numberOfItemsInScrollView:(PDLoopScrollView *)scrollView;
-- (nullable __kindof UIView *)scrollView:(PDLoopScrollView *)scrollView cellForItemAtIndex:(NSInteger)index;
-
-@optional
-- (void)scrollView:(PDLoopScrollView *)scrollView didSelectItemAtIndex:(NSInteger)index;
-- (void)scrollView:(PDLoopScrollView *)scrollView didScrollToIndex:(NSInteger)index;
-
-@end
-
-@protocol PDLoopScrollViewPageControlConfiguration <NSObject>
-
-@property (nonatomic) CGRect frame;
-@property (nonatomic, getter=isHidden) BOOL hidden;
-@property (nonatomic, strong, nullable) UIColor *pageIndicatorTintColor;
-@property (nonatomic, strong, nullable) UIColor *currentPageIndicatorTintColor;
-
-@end
-
 @interface PDLoopScrollView : UIView
 
+@property (nonatomic, weak) id<PDLoopScrollViewDataSource> dataSource;
 @property (nonatomic, weak) id<PDLoopScrollViewDelegate> delegate;
 
 // If secs is 0s, will not scroll automatically.
@@ -49,12 +33,34 @@ typedef NS_ENUM(NSUInteger, PDLoopScrollViewDirection) {
 @property (nonatomic, assign) PDLoopScrollViewDirection scrollDirection;
 // Current page number.
 @property (nonatomic, assign, readonly) NSInteger currentIndex;
-
-- (void)configPageControl:(void (^)(id<PDLoopScrollViewPageControlConfiguration> configuration))block;
+// Custom page control for scrollView, default is nil.
+@property (nonatomic, strong, nullable) UIView<PDLoopScrollViewPageControl> *pageControl;
 
 - (void)scrollToIndex:(NSInteger)index animated:(BOOL)animated;
 
 - (void)reloadData;
+
+@end
+
+@protocol PDLoopScrollViewPageControl <NSObject>
+
+@property (nonatomic) NSInteger numberOfPages;
+@property (nonatomic) NSInteger currentPage;
+
+@end
+
+@protocol PDLoopScrollViewDataSource <NSObject>
+
+- (NSInteger)numberOfItemsInScrollView:(PDLoopScrollView *)scrollView;
+- (nullable __kindof UIView *)scrollView:(PDLoopScrollView *)scrollView cellForItemAtIndex:(NSInteger)index;
+
+@end
+
+@protocol PDLoopScrollViewDelegate <NSObject>
+
+@optional
+- (void)scrollView:(PDLoopScrollView *)scrollView didSelectItemAtIndex:(NSInteger)index;
+- (void)scrollView:(PDLoopScrollView *)scrollView didScrollToIndex:(NSInteger)index;
 
 @end
 

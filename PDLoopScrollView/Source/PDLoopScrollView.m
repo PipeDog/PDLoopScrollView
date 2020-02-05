@@ -7,7 +7,6 @@
 //
 
 #import "PDLoopScrollView.h"
-#import <Masonry/Masonry.h>
 
 @interface _PDWeakTimer : NSObject {
 @private
@@ -52,33 +51,19 @@
 
 @end
 
-
-@interface _PDLoopScrollViewPageControlConfiguration : NSObject <PDLoopScrollViewPageControlConfiguration>
-
-@end
-
-@implementation _PDLoopScrollViewPageControlConfiguration
-
-@synthesize frame = _frame;
-@synthesize hidden = _hidden;
-@synthesize pageIndicatorTintColor = _pageIndicatorTintColor;
-@synthesize currentPageIndicatorTintColor = _currentPageIndicatorTintColor;
-
-@end
-
 @interface PDLoopScrollView () <UIScrollViewDelegate, UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout>
 
 @property (nonatomic, assign) NSInteger numberOfItems;
 @property (nonatomic, strong) UICollectionView *collectionView;
 @property (nonatomic, strong) UICollectionViewFlowLayout *flowLayout;
-@property (nonatomic, strong) UIPageControl *pageControl;
 @property (nonatomic, assign) NSInteger currentIndex;
 @property (nonatomic, strong) _PDWeakTimer *timer;
 @property (nonatomic, assign, readonly) CGFloat unitLen;
 @property (nonatomic, assign, readonly) CGFloat curOffsetLen;
 @property (nonatomic, assign, readonly) CGFloat contentLen;
 @property (nonatomic, assign) CGFloat preOffsetLen;
-@property (nonatomic, strong) _PDLoopScrollViewPageControlConfiguration *pageControlConfiguration;
+@property (nonatomic, strong) UIView<PDLoopScrollViewPageControl> *defaultPageControl; // Not displayed on the interface, just for logic.
+@property (nonatomic, strong, readonly) UIView<PDLoopScrollViewPageControl> *realPageControl;
 
 @end
 
@@ -95,8 +80,9 @@
 - (instancetype)initWithFrame:(CGRect)frame {
 	self = [super initWithFrame:frame];
 	if (self) {
-        [self makeDefault];
-		[self makeConstraints];
+        [self commitInit];
+        [self createViewHierarchy];
+        [self layoutContentViews];
 	}
 	return self;
 }
@@ -104,30 +90,39 @@
 - (instancetype)initWithCoder:(NSCoder *)aDecoder {
 	self = [super initWithCoder:aDecoder];
 	if (self) {
-        [self makeDefault];
-		[self makeConstraints];
-	}
+        [self commitInit];
+        [self createViewHierarchy];
+        [self layoutContentViews];
+    }
 	return self;
 }
 
-#pragma mark - Public Methods
-- (void)configPageControl:(void (^)(id<PDLoopScrollViewPageControlConfiguration> _Nonnull))block {
-    _PDLoopScrollViewPageControlConfiguration *configuration = [[_PDLoopScrollViewPageControlConfiguration alloc] init];
-    configuration.frame = CGRectMake(0, CGRectGetHeight(self.frame) - 30.f, CGRectGetWidth(self.frame), 30.f);
-    configuration.hidden = NO;
-    configuration.pageIndicatorTintColor = [UIColor lightGrayColor];
-    configuration.currentPageIndicatorTintColor = [UIColor whiteColor];
-    
-    !block ?: block(self.pageControlConfiguration = configuration);
-    
-    [self makePageControlConfig];
+- (void)commitInit {
+    self.userInteractionEnabled = YES;
+    self.scrollEnabled = YES;
+    self.secs = 0.0;
+    self.scrollDirection = PDLoopScrollViewDirectionHorizontal;
 }
 
+- (void)createViewHierarchy {
+    [self addSubview:self.collectionView];
+}
+
+- (void)layoutContentViews {
+    [NSLayoutConstraint activateConstraints:@[
+        [self.collectionView.topAnchor constraintEqualToAnchor:self.topAnchor],
+        [self.collectionView.leftAnchor constraintEqualToAnchor:self.leftAnchor],
+        [self.collectionView.bottomAnchor constraintEqualToAnchor:self.bottomAnchor],
+        [self.collectionView.rightAnchor constraintEqualToAnchor:self.rightAnchor],
+    ]];
+}
+
+#pragma mark - Public Methods
 - (void)scrollToIndex:(NSInteger)index animated:(BOOL)animated {
     [self invalidate];
     
     _currentIndex = index; // Do not call setter methods of `currentIndex`.
-    self.pageControl.currentPage = index;
+    self.realPageControl.currentPage = index;
     
     if (!animated && [self.delegate respondsToSelector:@selector(scrollView:didScrollToIndex:)]) {
         [self.delegate scrollView:self didScrollToIndex:_currentIndex];
@@ -140,57 +135,15 @@
 }
 
 - (void)reloadData {
-    self.numberOfItems = [self.delegate numberOfItemsInScrollView:self];
+    self.numberOfItems = [self.dataSource numberOfItemsInScrollView:self];
     
-    self.pageControl.numberOfPages = self.numberOfItems;
+    self.realPageControl.numberOfPages = self.numberOfItems;
     [self.collectionView reloadData];
 
-    [self makePageControlConfig];
     [self fire];
 }
 
 #pragma mark - Private Methods
-- (void)makeDefault {
-    self.userInteractionEnabled = YES;
-    self.scrollEnabled = YES;
-    self.secs = 0.0;
-    self.scrollDirection = PDLoopScrollViewDirectionHorizontal;
-}
-
-- (void)makeConstraints {
-	[self.collectionView mas_makeConstraints:^(MASConstraintMaker *make) {
-		make.top.left.bottom.and.right.equalTo(self);
-	}];
-	
-    [self.pageControl mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.height.mas_equalTo(25);
-        make.bottom.equalTo(self);
-        make.centerX.equalTo(self);
-    }];
-}
-
-- (void)makePageControlConfig {
-    _PDLoopScrollViewPageControlConfiguration *configuration = self.pageControlConfiguration;
-    if (!configuration) { return; }
-    
-    if (!CGRectEqualToRect(configuration.frame, CGRectZero)) {
-        [self.pageControl mas_remakeConstraints:^(MASConstraintMaker *make) {
-            make.top.mas_equalTo(configuration.frame.origin.y);
-            make.left.mas_equalTo(configuration.frame.origin.x);
-            make.size.mas_equalTo(configuration.frame.size);
-        }];
-    }
-    
-    self.pageControl.hidden = configuration.hidden;
-    
-    if (configuration.currentPageIndicatorTintColor) {
-        self.pageControl.currentPageIndicatorTintColor = configuration.currentPageIndicatorTintColor;
-    }
-    if (configuration.pageIndicatorTintColor) {
-        self.pageControl.pageIndicatorTintColor = configuration.pageIndicatorTintColor;
-    }
-}
-
 - (void)turnPage {
     CGFloat newOffsetLen = self.curOffsetLen + self.unitLen;
     
@@ -261,26 +214,30 @@
 - (UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath {
 	UICollectionViewCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"reuseId" forIndexPath:indexPath];
     
-    for (UIView *subview in [cell.subviews copy]) {
+    for (UIView *subview in [cell.contentView.subviews copy]) {
         [subview removeFromSuperview];
     }
 
     NSInteger index = [self convertIndexWithIndexPath:indexPath];
-    UIView *view = [self.delegate scrollView:self cellForItemAtIndex:index];
+    UIView *view = [self.dataSource scrollView:self cellForItemAtIndex:index];
     
     if (view) {
-        [cell addSubview:view];
+        view.translatesAutoresizingMaskIntoConstraints = NO;
+        [cell.contentView addSubview:view];
         
-        [view mas_makeConstraints:^(MASConstraintMaker *make) {
-            make.edges.equalTo(cell);
-        }];
+        [NSLayoutConstraint activateConstraints:@[
+            [view.topAnchor constraintEqualToAnchor:cell.contentView.topAnchor],
+            [view.leftAnchor constraintEqualToAnchor:cell.contentView.leftAnchor],
+            [view.bottomAnchor constraintEqualToAnchor:cell.contentView.bottomAnchor],
+            [view.rightAnchor constraintEqualToAnchor:cell.contentView.rightAnchor],
+        ]];
     }
 	return cell;
 }
 
 - (void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath {
     if ([self.delegate respondsToSelector:@selector(scrollView:didSelectItemAtIndex:)]) {
-        NSInteger index = self.pageControl.currentPage;
+        NSInteger index = self.realPageControl.currentPage;
         [self.delegate scrollView:self didSelectItemAtIndex:index];
     }
 }
@@ -306,7 +263,7 @@
         }
     }
     
-    if (round(self.curOffsetLen / self.unitLen) >= self.pageControl.numberOfPages) {
+    if (round(self.curOffsetLen / self.unitLen) >= self.realPageControl.numberOfPages) {
         self.currentIndex = 0;
     } else {
         self.currentIndex = self.curOffsetLen / self.unitLen;
@@ -321,14 +278,14 @@
         _collectionView.dataSource = self;
         _collectionView.delegate = self;
         _collectionView.translatesAutoresizingMaskIntoConstraints = NO;
-        [_collectionView registerClass:[UICollectionViewCell class] forCellWithReuseIdentifier:@"reuseId"];
         _collectionView.pagingEnabled = YES;
         _collectionView.showsHorizontalScrollIndicator = NO;
         _collectionView.showsVerticalScrollIndicator = NO;
         _collectionView.backgroundColor = [UIColor whiteColor];
         _collectionView.userInteractionEnabled = YES;
         _collectionView.contentInset = UIEdgeInsetsZero;
-        [self addSubview:_collectionView];
+        
+        [_collectionView registerClass:[UICollectionViewCell class] forCellWithReuseIdentifier:@"reuseId"];
     }
     return _collectionView;
 }
@@ -344,21 +301,6 @@
     return _flowLayout;
 }
 
-- (UIPageControl *)pageControl {
-    if (!_pageControl) {
-        _pageControl = [[UIPageControl alloc] init];
-        _pageControl.currentPage = 0;
-        _pageControl.numberOfPages = self.numberOfItems;
-        _pageControl.backgroundColor = [UIColor clearColor];
-        _pageControl.currentPageIndicatorTintColor = [UIColor whiteColor];
-        _pageControl.pageIndicatorTintColor = [UIColor lightGrayColor];
-        _pageControl.translatesAutoresizingMaskIntoConstraints = NO;
-        _pageControl.hidesForSinglePage = YES;
-        [self addSubview:_pageControl];
-    }
-    return _pageControl;
-}
-
 - (CGFloat)unitLen {
     return self.scrollDirection == PDLoopScrollViewDirectionHorizontal ? CGRectGetWidth(self.frame) : CGRectGetHeight(self.frame);
 }
@@ -371,12 +313,26 @@
     return self.scrollDirection == PDLoopScrollViewDirectionHorizontal ? self.collectionView.contentSize.width : self.collectionView.contentSize.height;
 }
 
+- (UIView<PDLoopScrollViewPageControl> *)defaultPageControl {
+    if (!_defaultPageControl) {
+        _defaultPageControl = (UIView<PDLoopScrollViewPageControl> *)[[UIPageControl alloc] init];
+    }
+    return _defaultPageControl;
+}
+
+- (UIView<PDLoopScrollViewPageControl> *)realPageControl {
+    if (self.pageControl) {
+        return self.pageControl;
+    }
+    return self.defaultPageControl;
+}
+
 #pragma mark - Setter Methods
-- (void)setDelegate:(id<PDLoopScrollViewDelegate>)delegate {
-    _delegate = delegate;
+- (void)setDataSource:(id<PDLoopScrollViewDataSource>)dataSource {
+    _dataSource = dataSource;
     
-    NSAssert([_delegate respondsToSelector:@selector(numberOfItemsInScrollView:)], @"Method [- numberOfItemsInScrollView:] must be impl.");
-    NSAssert([_delegate respondsToSelector:@selector(scrollView:cellForItemAtIndex:)], @"Method [- scrollView:cellForItemAtIndex:] must be impl.");
+    NSAssert([_dataSource respondsToSelector:@selector(numberOfItemsInScrollView:)], @"Method [- numberOfItemsInScrollView:] must be impl.");
+    NSAssert([_dataSource respondsToSelector:@selector(scrollView:cellForItemAtIndex:)], @"Method [- scrollView:cellForItemAtIndex:] must be impl.");
 }
 
 - (void)setScrollDirection:(PDLoopScrollViewDirection)scrollDirection {
@@ -401,7 +357,7 @@
         return;
     }
     _currentIndex = currentIndex;
-    self.pageControl.currentPage = _currentIndex;
+    self.realPageControl.currentPage = _currentIndex;
     
     if ([self.delegate respondsToSelector:@selector(scrollView:didScrollToIndex:)]) {
         [self.delegate scrollView:self didScrollToIndex:_currentIndex];
