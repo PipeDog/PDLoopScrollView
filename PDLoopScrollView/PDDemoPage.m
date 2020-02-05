@@ -48,7 +48,7 @@
     }];
 }
 
-#pragma mark - PDLoopScrollViewDelegate Methods
+#pragma mark - PDLoopScrollViewDataSource
 - (NSInteger)numberOfItemsInScrollView:(PDLoopScrollView *)scrollView {
     return self.dataSource.count;
 }
@@ -64,6 +64,7 @@
     return label;
 }
 
+#pragma mark - PDLoopScrollViewDelegate
 - (void)scrollView:(PDLoopScrollView *)scrollView didSelectItemAtIndex:(NSInteger)index {
     NSLog(@"%s, index = %zd", __func__, index);
 }
