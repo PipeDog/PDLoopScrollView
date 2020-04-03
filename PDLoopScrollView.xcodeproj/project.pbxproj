@@ -10,6 +10,7 @@
 		05764D8B7DB0A5DBBEA1C935 /* libPods-PDLoopScrollViewUITests.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E1FEF80ADD5EF07BE36C80A0 /* libPods-PDLoopScrollViewUITests.a */; };
 		46AECAE073A8C4452B7AA051 /* libPods-PDLoopScrollView.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5198315D42C08D195E098138 /* libPods-PDLoopScrollView.a */; };
 		A5BE0E6796900E0A755921EB /* libPods-PDLoopScrollViewTests.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 4951A7ADA2E39E05526A19BB /* libPods-PDLoopScrollViewTests.a */; };
+		DD164B452437A20300B3A058 /* PDPageControl.m in Sources */ = {isa = PBXBuildFile; fileRef = DD164B442437A20300B3A058 /* PDPageControl.m */; };
 		ECAB178521B176F700736BFC /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = ECAB178421B176F700736BFC /* AppDelegate.m */; };
 		ECAB178821B176F700736BFC /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = ECAB178721B176F700736BFC /* ViewController.m */; };
 		ECAB178B21B176F700736BFC /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = ECAB178921B176F700736BFC /* Main.storyboard */; };
@@ -46,6 +47,8 @@
 		A3A0634846439DCB1B10CB14 /* Pods-PDLoopScrollView.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-PDLoopScrollView.debug.xcconfig"; path = "Pods/Target Support Files/Pods-PDLoopScrollView/Pods-PDLoopScrollView.debug.xcconfig"; sourceTree = "<group>"; };
 		B07D56E3215EA5C6A4A005CE /* Pods-PDLoopScrollViewTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-PDLoopScrollViewTests.debug.xcconfig"; path = "Pods/Target Support Files/Pods-PDLoopScrollViewTests/Pods-PDLoopScrollViewTests.debug.xcconfig"; sourceTree = "<group>"; };
 		D516D68C68625309D051F7D5 /* Pods-PDLoopScrollViewUITests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-PDLoopScrollViewUITests.release.xcconfig"; path = "Pods/Target Support Files/Pods-PDLoopScrollViewUITests/Pods-PDLoopScrollViewUITests.release.xcconfig"; sourceTree = "<group>"; };
+		DD164B432437A20300B3A058 /* PDPageControl.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PDPageControl.h; sourceTree = "<group>"; };
+		DD164B442437A20300B3A058 /* PDPageControl.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = PDPageControl.m; sourceTree = "<group>"; };
 		E1FEF80ADD5EF07BE36C80A0 /* libPods-PDLoopScrollViewUITests.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-PDLoopScrollViewUITests.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		E66AEDC144628FB4A8100027 /* Pods-PDLoopScrollView.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-PDLoopScrollView.release.xcconfig"; path = "Pods/Target Support Files/Pods-PDLoopScrollView/Pods-PDLoopScrollView.release.xcconfig"; sourceTree = "<group>"; };
 		ECAB178021B176F700736BFC /* PDLoopScrollView.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PDLoopScrollView.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -186,6 +189,8 @@
 			children = (
 				ECAB17BC21B1809300736BFC /* PDLoopScrollView.h */,
 				ECAB17BF21B1809300736BFC /* PDLoopScrollView.m */,
+				DD164B432437A20300B3A058 /* PDPageControl.h */,
+				DD164B442437A20300B3A058 /* PDPageControl.m */,
 			);
 			path = Source;
 			sourceTree = "<group>";
@@ -476,6 +481,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				DD164B452437A20300B3A058 /* PDPageControl.m in Sources */,
 				ECAB178821B176F700736BFC /* ViewController.m in Sources */,
 				ECAB179321B176F800736BFC /* main.m in Sources */,
 				ECAB17C121B1809300736BFC /* PDLoopScrollView.m in Sources */,

@@ -9,8 +9,9 @@
 #import "PDDemoPage.h"
 #import "PDLoopScrollView.h"
 #import <Masonry/Masonry.h>
+#import "PDPageControl.h"
 
-@interface PDDemoPage () <PDLoopScrollViewDataSource, PDLoopScrollViewDelegate>
+@interface PDDemoPage () <PDLoopScrollViewDataSource, PDLoopScrollViewDelegate, PDPageControlDelegate>
 
 @property (nonatomic, strong) UIView<PDLoopScrollViewPageControl> *pageControl;
 @property (nonatomic, strong) PDLoopScrollView *scrollView;
@@ -73,11 +74,17 @@
     NSLog(@"%s, index = %zd", __func__, index);
 }
 
+#pragma mark - PDPageControlDelegate
+- (void)pageControl:(PDPageControl *)pageControl didSelectAtIndex:(NSUInteger)index {
+    NSLog(@"%s, index = %lu", __func__, index);
+    [self.scrollView scrollToIndex:index animated:YES];
+}
+
 #pragma mark - Getter Methods
 - (NSArray *)dataSource {
     return @[@[@"000", [UIColor magentaColor]],
              @[@"111", [UIColor blueColor]],
-             @[@"222", [UIColor yellowColor]],
+             @[@"222", [UIColor orangeColor]],
              @[@"333", [UIColor cyanColor]]];
 }
 
@@ -97,8 +104,9 @@
 
 - (UIView<PDLoopScrollViewPageControl> *)pageControl {
     if (!_pageControl) {
-        UIPageControl *pageControl = [[UIPageControl alloc] init];
+        PDPageControl *pageControl = [[PDPageControl alloc] init];
         pageControl.hidesForSinglePage = YES;
+        pageControl.delegate = self;
         
         _pageControl = (UIView<PDLoopScrollViewPageControl> *)pageControl;
     }
