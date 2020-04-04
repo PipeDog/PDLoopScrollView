@@ -20,11 +20,11 @@
 
 @interface PDPageControl ()
 
-@property (nonatomic, strong) NSArray<UIView *> *pageControlItems;
+@property (nonatomic, copy) NSArray<UIView *> *pageControlItems;
+@property (nonatomic, copy) NSArray<NSArray<NSLayoutConstraint *> *> *pageControlItemsConstraints;
 @property (nonatomic, strong) UIView *containerView;
 @property (nonatomic, strong) NSLayoutConstraint *containerLeftConstraint;
 @property (nonatomic, strong) NSLayoutConstraint *containerRightConstraint;
-@property (nonatomic, copy) NSArray<NSArray<NSLayoutConstraint *> *> *pageControlItemsConstraints;
 
 @end
 
@@ -104,8 +104,6 @@
 }
 
 - (void)_layoutPageControlItems {
-    self.pageControlItemsConstraints = nil;
-    
     CGFloat totalWidth = 0;
     NSMutableArray *pageControlItemsConstraints = [NSMutableArray array];
     NSUInteger count = self.pageControlItems.count;
@@ -154,6 +152,8 @@
     for (NSArray<NSLayoutConstraint *> *constraints in [self.pageControlItemsConstraints copy]) {
         [NSLayoutConstraint deactivateConstraints:constraints];
     }
+    
+    self.pageControlItemsConstraints = nil;
 }
 
 #pragma mark - Event Methods
