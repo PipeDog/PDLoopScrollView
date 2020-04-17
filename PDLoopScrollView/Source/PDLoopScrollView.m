@@ -281,7 +281,7 @@
         _collectionView.pagingEnabled = YES;
         _collectionView.showsHorizontalScrollIndicator = NO;
         _collectionView.showsVerticalScrollIndicator = NO;
-        _collectionView.backgroundColor = [UIColor whiteColor];
+        _collectionView.backgroundColor = [UIColor clearColor];
         _collectionView.userInteractionEnabled = YES;
         _collectionView.contentInset = UIEdgeInsetsZero;
         
@@ -362,6 +362,11 @@
     if ([self.delegate respondsToSelector:@selector(scrollView:didScrollToIndex:)]) {
         [self.delegate scrollView:self didScrollToIndex:_currentIndex];
     }
+}
+
+- (void)setBackgroundColor:(UIColor *)backgroundColor {
+    [super setBackgroundColor:backgroundColor];
+    self.collectionView.backgroundColor = backgroundColor;
 }
 
 @end
