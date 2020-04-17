@@ -95,8 +95,6 @@
         pageControlItem.index = i;
         pageControlItem.translatesAutoresizingMaskIntoConstraints = NO;
         [pageControlItem addTarget:self action:@selector(_didClickPageControlItem:) forControlEvents:UIControlEventTouchUpInside];
-        [self.containerView addSubview:pageControlItem];
-        
         [pageControlItems addObject:pageControlItem];
     }
     
@@ -118,6 +116,10 @@
         CGFloat left = totalWidth + self.itemSpacing * i;
         totalWidth += size.width;
                 
+        if (!pageControlItem.superview) {
+            [self.containerView addSubview:pageControlItem];
+        }
+        
         NSArray<NSLayoutConstraint *> *constraints = @[
             [pageControlItem.widthAnchor constraintEqualToConstant:size.width],
             [pageControlItem.heightAnchor constraintEqualToConstant:size.height],
