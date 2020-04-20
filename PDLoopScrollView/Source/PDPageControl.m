@@ -154,7 +154,9 @@
     for (NSArray<NSLayoutConstraint *> *constraints in [self.pageControlItemsConstraints copy]) {
         [NSLayoutConstraint deactivateConstraints:constraints];
     }
-    
+
+    self.containerLeftConstraint = nil;
+    self.containerRightConstraint = nil;
     self.pageControlItemsConstraints = nil;
 }
 
@@ -168,6 +170,7 @@
 #pragma mark - Setter Methods
 - (void)setNumberOfPages:(NSInteger)numberOfPages {
     _numberOfPages = numberOfPages;
+    [self _deactivateConstraints];
     [self _removeAllPageControlItems];
 
     if (_numberOfPages <= 1 && self.hidesForSinglePage) {
