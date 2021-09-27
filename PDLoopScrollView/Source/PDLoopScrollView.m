@@ -39,8 +39,7 @@ typedef NS_OPTIONS(NSUInteger, PDSwitchIndexActionOptions) {
                               newIndex:(NSInteger)newIndex
                               animated:(BOOL)animated
                                unitLen:(CGFloat)unitLen
-                          curOffsetLen:(CGFloat)curOffsetLen
-                            contentLen:(CGFloat)contentLen;
+                          curOffsetLen:(CGFloat)curOffsetLen;
 
 - (void)addDelegate:(id<PDSwitchIndexTransactionDelegate>)delegate;
 - (void)removeDelegate:(id<PDSwitchIndexTransactionDelegate>)delegate;
@@ -53,7 +52,7 @@ typedef NS_OPTIONS(NSUInteger, PDSwitchIndexActionOptions) {
     PDLoopScrollViewDirection _scrollDirection;
     NSInteger _numberOfItems, _newIndex;
     BOOL _animated;
-    CGFloat _unitLen, _curOffsetLen, _contentLen;
+    CGFloat _unitLen, _curOffsetLen;
 
     __weak UICollectionView *_collectionView;
     __weak UIView<PDLoopScrollViewPageControl> *_pageControl;
@@ -70,8 +69,7 @@ typedef NS_OPTIONS(NSUInteger, PDSwitchIndexActionOptions) {
                               newIndex:(NSInteger)newIndex
                               animated:(BOOL)animated
                                unitLen:(CGFloat)unitLen
-                          curOffsetLen:(CGFloat)curOffsetLen
-                            contentLen:(CGFloat)contentLen {
+                          curOffsetLen:(CGFloat)curOffsetLen {
     self = [super init];
     if (self) {
         _collectionView = collectionView;
@@ -83,7 +81,6 @@ typedef NS_OPTIONS(NSUInteger, PDSwitchIndexActionOptions) {
         _animated = animated;
         _unitLen = unitLen;
         _curOffsetLen = curOffsetLen;
-        _contentLen = contentLen;
         
         _executing = NO;
         _delegates = [NSHashTable weakObjectsHashTable];
@@ -101,13 +98,13 @@ typedef NS_OPTIONS(NSUInteger, PDSwitchIndexActionOptions) {
 
 - (void)commit {
     NSInteger newIndex = _newIndex, numberOfItems = _numberOfItems;
-    CGFloat unitLen = _unitLen, curOffsetLen = _curOffsetLen, contentLen = _contentLen;
+    CGFloat unitLen = _unitLen, curOffsetLen = _curOffsetLen;
     BOOL animated = _animated;
     UICollectionView *collectionView = _collectionView;
         
     // Get target contentOffset
     CGFloat newOffsetLen = newIndex * unitLen;
-    if (newOffsetLen == contentLen - unitLen) {
+    if (newIndex >= numberOfItems) {
         // Last page, scroll to first page.
         newOffsetLen += 1;
     }
@@ -230,29 +227,29 @@ typedef NS_OPTIONS(NSUInteger, PDSwitchIndexActionOptions) {
 
 @end
 
-@interface _PDWeakTimer : NSObject {
+@interface PDWeakTimer : NSObject {
 @private
     NSTimer *_timer;
     void (^_block)(void);
 }
 
-+ (_PDWeakTimer *)timerWithTimeInterval:(NSTimeInterval)interval repeats:(BOOL)repeats block:(void (^)(void))block;
++ (PDWeakTimer *)timerWithTimeInterval:(NSTimeInterval)interval repeats:(BOOL)repeats block:(void (^)(void))block;
 
 - (void)fire;
 - (void)invalidate;
 
 @end
 
-@implementation _PDWeakTimer
+@implementation PDWeakTimer
 
 - (void)dealloc {
     [self invalidate];
 }
 
-+ (_PDWeakTimer *)timerWithTimeInterval:(NSTimeInterval)interval
++ (PDWeakTimer *)timerWithTimeInterval:(NSTimeInterval)interval
                                 repeats:(BOOL)repeats
                                   block:(void (^)(void))block {
-    _PDWeakTimer *weakTimer = [[_PDWeakTimer alloc] init];
+    PDWeakTimer *weakTimer = [[PDWeakTimer alloc] init];
     weakTimer->_block = [block copy];
     weakTimer->_timer = [NSTimer timerWithTimeInterval:interval
                                                 target:weakTimer
@@ -285,7 +282,7 @@ typedef NS_OPTIONS(NSUInteger, PDSwitchIndexActionOptions) {
 @property (nonatomic, strong) UICollectionView *collectionView;
 @property (nonatomic, strong) UICollectionViewFlowLayout *flowLayout;
 @property (nonatomic, assign) NSInteger currentIndex;
-@property (nonatomic, strong) _PDWeakTimer *timer;
+@property (nonatomic, strong) PDWeakTimer *timer;
 @property (nonatomic, assign, readonly) CGFloat unitLen;
 @property (nonatomic, assign, readonly) CGFloat curOffsetLen;
 @property (nonatomic, assign, readonly) CGFloat contentLen;
@@ -380,8 +377,7 @@ typedef NS_OPTIONS(NSUInteger, PDSwitchIndexActionOptions) {
                                                     newIndex:index
                                                     animated:animated
                                                      unitLen:self.unitLen
-                                                curOffsetLen:self.curOffsetLen
-                                                  contentLen:self.contentLen];
+                                                curOffsetLen:self.curOffsetLen];
     [transaction addDelegate:self];
     [self.transactionQueue addTransaction:transaction];
 }
@@ -394,7 +390,7 @@ typedef NS_OPTIONS(NSUInteger, PDSwitchIndexActionOptions) {
     }
     
     __weak typeof(self) weakSelf = self;
-    self.timer = [_PDWeakTimer timerWithTimeInterval:self.timeInterval repeats:YES block:^{
+    self.timer = [PDWeakTimer timerWithTimeInterval:self.timeInterval repeats:YES block:^{
         [weakSelf turnPage];
     }];
 }
