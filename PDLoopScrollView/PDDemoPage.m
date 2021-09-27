@@ -75,7 +75,7 @@
 }
 
 #pragma mark - PDPageControlDelegate
-- (void)pageControl:(PDPageControl *)pageControl didSelectAtIndex:(NSUInteger)index {
+- (void)pageControl:(PDPageControl *)pageControl didSelectAtIndex:(NSInteger)index {
     NSLog(@"%s, index = %lu", __func__, index);
     [self.scrollView scrollToIndex:index animated:YES];
 }

@@ -7,7 +7,6 @@
 //
 
 #import <UIKit/UIKit.h>
-#import "PDLoopScrollView.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -15,19 +14,25 @@ NS_ASSUME_NONNULL_BEGIN
 
 @protocol PDPageControlDelegate <NSObject>
 
-- (void)pageControl:(PDPageControl *)pageControl didSelectAtIndex:(NSUInteger)index;
+@optional
+- (void)pageControl:(PDPageControl *)pageControl didSelectAtIndex:(NSInteger)index;
 
 @end
 
-@interface PDPageControl : UIView <PDLoopScrollViewPageControl>
+@interface PDPageControl : UIView
 
 @property (nonatomic, weak, nullable) id<PDPageControlDelegate> delegate;
+@property (nonatomic, assign) NSInteger numberOfPages;
+@property (nonatomic, assign) NSInteger currentPage;
 @property (nonatomic, assign) BOOL hidesForSinglePage;
 @property (nonatomic, assign) CGFloat itemSpacing;
 @property (nonatomic, assign) CGSize itemSize;
 @property (nonatomic, assign) CGSize currentPageItemSize;
 @property (nonatomic, strong) UIColor *itemColor;
 @property (nonatomic, strong) UIColor *currentPageItemColor;
+@property (nonatomic, assign) NSTimeInterval animationDuration;
+
+- (void)setCurrentPage:(NSInteger)currentPage animated:(BOOL)animated;
 
 @end
 

@@ -10,7 +10,7 @@
 
 @interface PDPageControlItem : UIControl
 
-@property (nonatomic, assign) NSUInteger index;
+@property (nonatomic, assign) NSInteger index;
 
 @end
 
@@ -30,9 +30,6 @@
 
 @implementation PDPageControl
 
-@synthesize currentPage = _currentPage;
-@synthesize numberOfPages = _numberOfPages;
-
 - (instancetype)init {
     return [self initWithFrame:CGRectZero];
 }
@@ -40,14 +37,14 @@
 - (instancetype)initWithFrame:(CGRect)frame {
     self = [super initWithFrame:frame];
     if (self) {
-        [self _commitInit];
-        [self _createViewHierarchy];
-        [self _layoutContentViews];
+        [self setupInitializeConfiguration];
+        [self createViewHierarchy];
+        [self layoutContentViews];
     }
     return self;
 }
 
-- (void)_commitInit {
+- (void)setupInitializeConfiguration {
     self.backgroundColor = [UIColor clearColor];
 
     _currentPage = 0;
@@ -58,13 +55,14 @@
     _currentPageItemSize = CGSizeMake(12.f, 3.f);
     _itemColor = [[UIColor whiteColor] colorWithAlphaComponent:0.5f];
     _currentPageItemColor = [UIColor whiteColor];
+    _animationDuration = 0.3f;
 }
 
-- (void)_createViewHierarchy {
+- (void)createViewHierarchy {
     [self addSubview:self.containerView];
 }
 
-- (void)_layoutContentViews {
+- (void)layoutContentViews {
     [NSLayoutConstraint activateConstraints:@[
         [self.containerView.centerXAnchor constraintEqualToAnchor:self.centerXAnchor],
         [self.containerView.centerYAnchor constraintEqualToAnchor:self.centerYAnchor],
@@ -73,12 +71,6 @@
 }
 
 #pragma mark - Tool Methods
-- (void)_forceUpdateConstraints {
-    [self _deactivateConstraints];
-    [self _layoutPageControlItems];
-    [self _layoutContainerView];
-}
-
 - (void)_removeAllPageControlItems {
     [self.pageControlItems makeObjectsPerformSelector:@selector(removeFromSuperview)];
 }
@@ -95,10 +87,22 @@
         pageControlItem.index = i;
         pageControlItem.translatesAutoresizingMaskIntoConstraints = NO;
         [pageControlItem addTarget:self action:@selector(_didClickPageControlItem:) forControlEvents:UIControlEventTouchUpInside];
+
         [pageControlItems addObject:pageControlItem];
     }
     
     self.pageControlItems = [pageControlItems copy];
+}
+
+#pragma mark - Layout Methods
+- (void)_forceUpdateConstraintsWithAnimated:(BOOL)animated {
+    CGFloat animationDuration = animated ? self.animationDuration : 0.f;
+    [UIView animateWithDuration:animationDuration animations:^{
+        [self _deactivateConstraints];
+        [self _layoutPageControlItems];
+        [self _layoutContainerView];
+        [self layoutIfNeeded];
+    }];
 }
 
 - (void)_layoutPageControlItems {
@@ -115,11 +119,11 @@
 
         CGFloat left = totalWidth + self.itemSpacing * i;
         totalWidth += size.width;
-                
+        
         if (!pageControlItem.superview) {
             [self.containerView addSubview:pageControlItem];
         }
-        
+                
         NSArray<NSLayoutConstraint *> *constraints = @[
             [pageControlItem.widthAnchor constraintEqualToConstant:size.width],
             [pageControlItem.heightAnchor constraintEqualToConstant:size.height],
@@ -137,7 +141,9 @@
 - (void)_layoutContainerView {
     UIView *firstItem = self.pageControlItems.firstObject;
     UIView *lastItem = self.pageControlItems.lastObject;
-    
+    if (!firstItem || !lastItem) {
+        return;
+    }
     self.containerLeftConstraint = [self.containerView.leftAnchor constraintEqualToAnchor:firstItem.leftAnchor];
     self.containerRightConstraint = [self.containerView.rightAnchor constraintEqualToAnchor:lastItem.rightAnchor];
     
@@ -154,7 +160,7 @@
     for (NSArray<NSLayoutConstraint *> *constraints in [self.pageControlItemsConstraints copy]) {
         [NSLayoutConstraint deactivateConstraints:constraints];
     }
-
+    
     self.containerLeftConstraint = nil;
     self.containerRightConstraint = nil;
     self.pageControlItemsConstraints = nil;
@@ -178,12 +184,22 @@
     }
     
     [self _createPageControlItemsIfNeeded];
-    [self _forceUpdateConstraints];
+    [self _forceUpdateConstraintsWithAnimated:NO];
 }
 
 - (void)setCurrentPage:(NSInteger)currentPage {
+    [self setCurrentPage:currentPage animated:NO];
+}
+
+- (void)setCurrentPage:(NSInteger)currentPage animated:(BOOL)animated {
     _currentPage = currentPage;
-    [self _forceUpdateConstraints];
+    [self _forceUpdateConstraintsWithAnimated:animated];
+}
+
+- (void)setAnimationDuration:(NSTimeInterval)animationDuration {
+    animationDuration = MAX(0, animationDuration);
+    animationDuration = MIN(1, animationDuration);
+    _animationDuration = animationDuration;
 }
 
 #pragma mark - Getter Methods
