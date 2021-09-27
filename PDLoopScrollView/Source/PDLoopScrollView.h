@@ -25,8 +25,8 @@ typedef NS_ENUM(NSUInteger, PDLoopScrollViewDirection) {
 @property (nonatomic, weak) id<PDLoopScrollViewDataSource> dataSource;
 @property (nonatomic, weak) id<PDLoopScrollViewDelegate> delegate;
 
-// If secs is 0s, will not scroll automatically.
-@property (nonatomic, assign) NSTimeInterval secs;
+// If timeInterval is 0s, will not scroll automatically.
+@property (nonatomic, assign) NSTimeInterval timeInterval;
 // Control gestures scrolling, default is YES.
 @property (nonatomic, assign, getter=isScrollEnabled) BOOL scrollEnabled;
 // Default is PDLoopScrollViewDirectionHorizontal.

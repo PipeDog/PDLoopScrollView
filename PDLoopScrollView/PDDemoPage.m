@@ -94,7 +94,7 @@
         _scrollView.backgroundColor = [UIColor lightGrayColor];
         _scrollView.delegate = self;
         _scrollView.dataSource = self;
-        _scrollView.secs = 2.f;
+        _scrollView.timeInterval = 2.f;
         _scrollView.scrollEnabled = YES;
         _scrollView.scrollDirection = PDLoopScrollViewDirectionHorizontal;
         _scrollView.pageControl = self.pageControl;
