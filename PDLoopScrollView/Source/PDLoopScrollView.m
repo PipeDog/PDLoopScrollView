@@ -383,7 +383,7 @@ typedef NS_OPTIONS(NSUInteger, PDSwitchIndexActionOptions) {
 - (void)fire {
     [self invalidate];
     
-    if (self.timeInterval == 0) {
+    if (self.timeInterval <= 0.01f) {
         return;
     }
     
