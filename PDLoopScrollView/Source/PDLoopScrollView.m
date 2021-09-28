@@ -38,8 +38,7 @@ typedef NS_OPTIONS(NSUInteger, PDSwitchIndexActionOptions) {
                          numberOfItems:(NSInteger)numberOfItems
                               newIndex:(NSInteger)newIndex
                               animated:(BOOL)animated
-                               unitLen:(CGFloat)unitLen
-                          curOffsetLen:(CGFloat)curOffsetLen;
+                               unitLen:(CGFloat)unitLen;
 
 - (void)addDelegate:(id<PDSwitchIndexTransactionDelegate>)delegate;
 - (void)removeDelegate:(id<PDSwitchIndexTransactionDelegate>)delegate;
@@ -52,7 +51,7 @@ typedef NS_OPTIONS(NSUInteger, PDSwitchIndexActionOptions) {
     PDLoopScrollViewDirection _scrollDirection;
     NSInteger _numberOfItems, _newIndex;
     BOOL _animated;
-    CGFloat _unitLen, _curOffsetLen;
+    CGFloat _unitLen;
 
     __weak UICollectionView *_collectionView;
     __weak UIView<PDLoopScrollViewPageControl> *_pageControl;
@@ -68,8 +67,7 @@ typedef NS_OPTIONS(NSUInteger, PDSwitchIndexActionOptions) {
                          numberOfItems:(NSInteger)numberOfItems
                               newIndex:(NSInteger)newIndex
                               animated:(BOOL)animated
-                               unitLen:(CGFloat)unitLen
-                          curOffsetLen:(CGFloat)curOffsetLen {
+                               unitLen:(CGFloat)unitLen {
     self = [super init];
     if (self) {
         _collectionView = collectionView;
@@ -80,7 +78,6 @@ typedef NS_OPTIONS(NSUInteger, PDSwitchIndexActionOptions) {
         _newIndex = newIndex;
         _animated = animated;
         _unitLen = unitLen;
-        _curOffsetLen = curOffsetLen;
         
         _executing = NO;
         _delegates = [NSHashTable weakObjectsHashTable];
@@ -98,7 +95,7 @@ typedef NS_OPTIONS(NSUInteger, PDSwitchIndexActionOptions) {
 
 - (void)commit {
     NSInteger newIndex = _newIndex, numberOfItems = _numberOfItems;
-    CGFloat unitLen = _unitLen, curOffsetLen = _curOffsetLen;
+    CGFloat unitLen = _unitLen;
     BOOL animated = _animated;
     UICollectionView *collectionView = _collectionView;
         
@@ -124,14 +121,6 @@ typedef NS_OPTIONS(NSUInteger, PDSwitchIndexActionOptions) {
         self->_executing = NO;
         self->_pageControlIndex = newIndex >= numberOfItems ? 0 : newIndex;
         [self notifyAllDelegates];
-        
-        // Fix: Switch tabBar or navigation push error.
-        // Reason: The system will remove all CoreAnimation animations in the view not-on-screen, so that the animation cannot be completed and the rotations stay in the state of switching.
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-            if (curOffsetLen != newOffsetLen && curOffsetLen != 0) {
-                self->_collectionView.contentOffset = offset;
-            }
-        });
     }];
 }
 
@@ -145,7 +134,7 @@ typedef NS_OPTIONS(NSUInteger, PDSwitchIndexActionOptions) {
     
     !animation ?: animation();
     
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.2f * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.3f * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         !completion ?: completion();
     });
 }
@@ -386,8 +375,7 @@ typedef NS_OPTIONS(NSUInteger, PDSwitchIndexActionOptions) {
                                                numberOfItems:self.numberOfItems
                                                     newIndex:index
                                                     animated:animated
-                                                     unitLen:self.unitLen
-                                                curOffsetLen:self.curOffsetLen];
+                                                     unitLen:self.unitLen];
     [transaction addDelegate:self];
     [self.transactionQueue addTransaction:transaction];
 }
@@ -522,6 +510,14 @@ typedef NS_OPTIONS(NSUInteger, PDSwitchIndexActionOptions) {
 - (void)didFinishExecutingTransaction:(PDSwitchIndexTransaction *)transaction {
     NSInteger pageControlIndex = transaction.pageControlIndex;
     [self setCurrentIndex:pageControlIndex withOptions:PDSwitchIndexActionOptionAll];
+    
+    // Fix    : Switch tabBar or navigation push error.
+    // Reason : The system will remove all CoreAnimation animations in the view not-on-screen,
+    //          so that the animation cannot be completed and the rotations stay in the state of switching.
+    if ((NSInteger)self.curOffsetLen % (NSInteger)self.unitLen != 0) {
+        [self.collectionView scrollToItemAtIndexPath:[NSIndexPath indexPathForRow:pageControlIndex inSection:0] atScrollPosition:UICollectionViewScrollPositionNone animated:NO];
+    }
+    
     [self fire];
 }
 
