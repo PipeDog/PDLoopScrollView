@@ -355,7 +355,6 @@ typedef NS_OPTIONS(NSUInteger, PDSwitchIndexActionOptions) {
     
     index = MAX(index, 0);
     index = MIN(index, self.numberOfItems - 1);
-    
     [self switchToIndex:index animated:animated];
 }
 
