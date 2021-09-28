@@ -211,10 +211,14 @@ typedef NS_OPTIONS(NSUInteger, PDSwitchIndexActionOptions) {
 
 #pragma mark - Tool Methods
 - (void)commitTransactionIfNeeded {
-    if (!_transactions.count) { return; }
-    
-    PDSwitchIndexTransaction *transaction = _transactions[0];
-    if (transaction.isExecuting) { return; }
+    PDSwitchIndexTransaction *transaction = _transactions.firstObject;
+
+    if (!transaction) {
+        return;
+    }
+    if (transaction.isExecuting) {
+        return;
+    }
     
     [transaction commit];
 }
@@ -345,6 +349,13 @@ typedef NS_OPTIONS(NSUInteger, PDSwitchIndexActionOptions) {
 
 #pragma mark - Public Methods
 - (void)scrollToIndex:(NSInteger)index animated:(BOOL)animated {
+    if (self.numberOfItems <= 0 || self.currentIndex == index) {
+        return;
+    }
+    
+    index = MAX(index, 0);
+    index = MIN(index, self.numberOfItems - 1);
+    
     [self switchToIndex:index animated:animated];
 }
 
