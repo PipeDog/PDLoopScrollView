@@ -282,6 +282,7 @@ typedef NS_OPTIONS(NSUInteger, PDSwitchIndexActionOptions) {
 @property (nonatomic, assign) CGFloat preOffsetLen;
 @property (nonatomic, strong) UIView<PDLoopScrollViewPageControl> *defaultPageControl; // Not displayed on the interface, just for logic.
 @property (nonatomic, strong) PDSwitchIndexQueue *transactionQueue;
+@property (nonatomic, assign) BOOL isSuspended;
 
 @end
 
@@ -317,9 +318,12 @@ typedef NS_OPTIONS(NSUInteger, PDSwitchIndexActionOptions) {
 
 - (void)setupInitializeConfiguration {
     self.userInteractionEnabled = YES;
-    self.scrollEnabled = YES;
-    self.timeInterval = 0.0;
-    self.scrollDirection = PDLoopScrollViewDirectionHorizontal;
+    self.collectionView.hidden = YES;
+    
+    _scrollEnabled = YES;
+    _timeInterval = 3.f;
+    _isSuspended = NO;
+    _scrollDirection = PDLoopScrollViewDirectionHorizontal;
     _transactionQueue = [[PDSwitchIndexQueue alloc] init];
 }
 
@@ -347,8 +351,31 @@ typedef NS_OPTIONS(NSUInteger, PDSwitchIndexActionOptions) {
     [self switchToIndex:index animated:animated];
 }
 
+- (void)suspend {
+   if (_isSuspended) {
+       return;
+   }
+   
+   _isSuspended = YES;
+   [self.transactionQueue removeAllTransactions];
+}
+
+- (void)resume {
+   if (!_isSuspended) {
+       return;
+   }
+
+   _isSuspended = NO;
+   [self fire];
+}
+
 - (void)reloadData {
     [self.transactionQueue removeAllTransactions];
+    
+    // The collectionView is silently refreshed once by default
+    if (self.collectionView.isHidden) {
+        self.collectionView.hidden = NO;
+    }
     
     self.numberOfItems = [self.dataSource numberOfItemsInScrollView:self];
     self.pageControl.numberOfPages = self.numberOfItems;
@@ -366,7 +393,11 @@ typedef NS_OPTIONS(NSUInteger, PDSwitchIndexActionOptions) {
 
 - (void)switchToIndex:(NSInteger)index animated:(BOOL)animated {
     [self invalidate];
-
+    
+    if (_isSuspended) {
+        return;
+    }
+        
     PDSwitchIndexTransaction *transaction =
     [[PDSwitchIndexTransaction alloc] initWithCollectionView:self.collectionView
                                                  pageControl:self.pageControl
