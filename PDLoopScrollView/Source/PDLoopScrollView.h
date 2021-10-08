@@ -33,6 +33,8 @@ typedef NS_ENUM(NSUInteger, PDLoopScrollViewDirection) {
 @property (nonatomic, assign) PDLoopScrollViewDirection scrollDirection;
 // Current page number.
 @property (nonatomic, assign, readonly) NSInteger currentIndex;
+// Whether a loop is required for a single page, deafult is NO.
+@property (nonatomic, assign) BOOL shouldLoopWhenSinglePage;
 // Custom page control for scrollView, default is nil.
 @property (nonatomic, strong, nullable) UIView<PDLoopScrollViewPageControl> *pageControl;
 

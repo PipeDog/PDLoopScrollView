@@ -92,10 +92,12 @@
 
 #pragma mark - Getter Methods
 - (NSArray *)dataSource {
-    return @[@[@"000", [UIColor magentaColor]],
-             @[@"111", [UIColor blueColor]],
-             @[@"222", [UIColor orangeColor]],
-             @[@"333", [UIColor cyanColor]]];
+    return @[
+        @[@"000", [UIColor magentaColor]],
+        /*@[@"111", [UIColor blueColor]],
+         @[@"222", [UIColor orangeColor]],
+         @[@"333", [UIColor cyanColor]]*/
+    ];
 }
 
 - (PDLoopScrollView *)scrollView {
@@ -108,6 +110,7 @@
         _scrollView.scrollEnabled = YES;
         _scrollView.scrollDirection = PDLoopScrollViewDirectionHorizontal;
         _scrollView.pageControl = self.pageControl;
+        _scrollView.shouldLoopWhenSinglePage = YES;
     }
     return _scrollView;
 }
@@ -115,7 +118,7 @@
 - (UIView<PDLoopScrollViewPageControl> *)pageControl {
     if (!_pageControl) {
         PDPageControl *pageControl = [[PDPageControl alloc] init];
-        pageControl.hidesForSinglePage = YES;
+        pageControl.hidesForSinglePage = NO;
         pageControl.delegate = self;
         
         _pageControl = (UIView<PDLoopScrollViewPageControl> *)pageControl;

@@ -114,13 +114,17 @@ typedef NS_OPTIONS(NSUInteger, PDSwitchIndexActionOptions) {
     }
     
     // If the animation has already started, it can not be cancelled
+    __weak typeof(self) weakSelf = self;
     [self performAnimation:^{
         self->_executing = YES;
         [collectionView setContentOffset:offset animated:animated];
     } completion:^{
-        self->_executing = NO;
-        self->_pageControlIndex = newIndex >= numberOfItems ? 0 : newIndex;
-        [self notifyAllDelegates];
+        __strong typeof(weakSelf) strongSelf = weakSelf;
+        if (!strongSelf) { return; }
+        
+        strongSelf->_executing = NO;
+        strongSelf->_pageControlIndex = newIndex >= numberOfItems ? 0 : newIndex;
+        [strongSelf notifyAllDelegates];
     }];
 }
 
@@ -324,6 +328,7 @@ typedef NS_OPTIONS(NSUInteger, PDSwitchIndexActionOptions) {
     _timeInterval = 3.f;
     _isSuspended = NO;
     _scrollDirection = PDLoopScrollViewDirectionHorizontal;
+    _shouldLoopWhenSinglePage = NO;
     _transactionQueue = [[PDSwitchIndexQueue alloc] init];
 }
 
@@ -418,6 +423,14 @@ typedef NS_OPTIONS(NSUInteger, PDSwitchIndexActionOptions) {
         return;
     }
     
+    // Check number of items
+    if (self.numberOfItems == 0) {
+        return;
+    }
+    if (self.numberOfItems == 1 && !self.shouldLoopWhenSinglePage) {
+        return;
+    }
+    
     __weak typeof(self) weakSelf = self;
     self.timer = [PDWeakTimer timerWithTimeInterval:self.timeInterval repeats:YES block:^{
         [weakSelf turnPage];
@@ -462,9 +475,13 @@ typedef NS_OPTIONS(NSUInteger, PDSwitchIndexActionOptions) {
 
 #pragma mark - UICollectionView Protocols
 - (NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section {
-    if (self.numberOfItems == 1) {
+    if (self.numberOfItems == 0) {
+        return 0;
+    }
+    if (self.numberOfItems == 1 && !self.shouldLoopWhenSinglePage) {
         return 1;
     }
+    
     return self.numberOfItems + 1;
 }
 
