@@ -52,7 +52,7 @@ typedef NS_OPTIONS(NSUInteger, PDSwitchIndexActionOptions) {
     NSInteger _numberOfItems, _newIndex;
     BOOL _animated;
     CGFloat _unitLen;
-
+    
     __weak UICollectionView *_collectionView;
     __weak UIView<PDLoopScrollViewPageControl> *_pageControl;
     __weak UIView<PDLoopScrollViewPageControl> *_defaultPageControl;
@@ -98,14 +98,14 @@ typedef NS_OPTIONS(NSUInteger, PDSwitchIndexActionOptions) {
     CGFloat unitLen = _unitLen;
     BOOL animated = _animated;
     UICollectionView *collectionView = _collectionView;
-        
+    
     // Get target contentOffset
     CGFloat newOffsetLen = newIndex * unitLen;
     if (newIndex >= numberOfItems) {
         // Last page, scroll to first page.
         newOffsetLen += 1;
     }
-        
+    
     CGPoint offset;
     if (_scrollDirection == PDLoopScrollViewDirectionHorizontal) {
         offset = CGPointMake(newOffsetLen, 0);
@@ -196,7 +196,7 @@ typedef NS_OPTIONS(NSUInteger, PDSwitchIndexActionOptions) {
 - (void)removeAllTransactions {
     NSArray<PDSwitchIndexTransaction *> *allTransactions = [_transactions copy];
     [_transactions removeAllObjects];
-
+    
     for (PDSwitchIndexTransaction *transaction in allTransactions) {
         [transaction removeDelegate:self];
     }
@@ -205,7 +205,7 @@ typedef NS_OPTIONS(NSUInteger, PDSwitchIndexActionOptions) {
 #pragma mark - Tool Methods
 - (void)commitTransactionIfNeeded {
     PDSwitchIndexTransaction *transaction = _transactions.firstObject;
-
+    
     if (!transaction) {
         return;
     }
@@ -244,8 +244,8 @@ typedef NS_OPTIONS(NSUInteger, PDSwitchIndexActionOptions) {
 }
 
 + (PDWeakTimer *)timerWithTimeInterval:(NSTimeInterval)interval
-                                repeats:(BOOL)repeats
-                                  block:(void (^)(void))block {
+                               repeats:(BOOL)repeats
+                                 block:(void (^)(void))block {
     PDWeakTimer *weakTimer = [[PDWeakTimer alloc] init];
     weakTimer->_block = [block copy];
     weakTimer->_timer = [NSTimer timerWithTimeInterval:interval
@@ -357,21 +357,22 @@ typedef NS_OPTIONS(NSUInteger, PDSwitchIndexActionOptions) {
 }
 
 - (void)suspend {
-   if (_isSuspended) {
-       return;
-   }
-   
-   _isSuspended = YES;
-   [self.transactionQueue removeAllTransactions];
+    if (_isSuspended) {
+        return;
+    }
+    
+    _isSuspended = YES;
+    [self.transactionQueue removeAllTransactions];
 }
 
 - (void)resume {
-   if (!_isSuspended) {
-       return;
-   }
-
-   _isSuspended = NO;
-   [self fire];
+    if (!_isSuspended) {
+        return;
+    }
+    
+    _isSuspended = NO;
+    [self repairOffsetIfNeeded];
+    [self fire];
 }
 
 - (void)reloadData {
@@ -386,7 +387,7 @@ typedef NS_OPTIONS(NSUInteger, PDSwitchIndexActionOptions) {
     self.pageControl.numberOfPages = self.numberOfItems;
     self.defaultPageControl.numberOfPages = self.numberOfItems;
     [self.collectionView reloadData];
-
+    
     [self fire];
 }
 
@@ -402,7 +403,7 @@ typedef NS_OPTIONS(NSUInteger, PDSwitchIndexActionOptions) {
     if (_isSuspended) {
         return;
     }
-        
+    
     PDSwitchIndexTransaction *transaction =
     [[PDSwitchIndexTransaction alloc] initWithCollectionView:self.collectionView
                                                  pageControl:self.pageControl
@@ -473,6 +474,19 @@ typedef NS_OPTIONS(NSUInteger, PDSwitchIndexActionOptions) {
     }
 }
 
+- (void)repairOffsetIfNeeded {
+    if (!self.numberOfItems) {
+        return;
+    }
+    
+    // Fix: Switch tabBar or navigation push error.
+    // Reason: The system will remove all CoreAnimation animations in the view not-on-screen, so that the animation cannot be completed and the rotations stay in the state of switching.
+    if ((NSInteger)self.curOffsetLen % (NSInteger)self.unitLen != 0) {
+        NSIndexPath *indexPath = [NSIndexPath indexPathForRow:self.currentIndex inSection:0];
+        [self.collectionView scrollToItemAtIndexPath:indexPath atScrollPosition:UICollectionViewScrollPositionNone animated:NO];
+    }
+}
+
 #pragma mark - UICollectionView Protocols
 - (NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section {
     if (self.numberOfItems == 0) {
@@ -495,7 +509,7 @@ typedef NS_OPTIONS(NSUInteger, PDSwitchIndexActionOptions) {
     for (UIView *subview in [cell.contentView.subviews copy]) {
         [subview removeFromSuperview];
     }
-
+    
     NSInteger index = [self convertIndexWithIndexPath:indexPath];
     UIView *view = [self.dataSource scrollView:self cellForItemAtIndex:index];
     
@@ -559,13 +573,7 @@ typedef NS_OPTIONS(NSUInteger, PDSwitchIndexActionOptions) {
     NSInteger pageControlIndex = transaction.pageControlIndex;
     [self setCurrentIndex:pageControlIndex withOptions:PDSwitchIndexActionOptionAll];
     
-    // Fix    : Switch tabBar or navigation push error.
-    // Reason : The system will remove all CoreAnimation animations in the view not-on-screen,
-    //          so that the animation cannot be completed and the rotations stay in the state of switching.
-    if ((NSInteger)self.curOffsetLen % (NSInteger)self.unitLen != 0) {
-        [self.collectionView scrollToItemAtIndexPath:[NSIndexPath indexPathForRow:pageControlIndex inSection:0] atScrollPosition:UICollectionViewScrollPositionNone animated:NO];
-    }
-    
+    [self repairOffsetIfNeeded];
     [self fire];
 }
 
