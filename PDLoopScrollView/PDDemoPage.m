@@ -110,7 +110,7 @@
         _scrollView.scrollEnabled = YES;
         _scrollView.scrollDirection = PDLoopScrollViewDirectionHorizontal;
         _scrollView.pageControl = self.pageControl;
-        _scrollView.shouldLoopWhenSinglePage = YES;
+        _scrollView.enabledLoopWhenSinglePage = YES;
     }
     return _scrollView;
 }

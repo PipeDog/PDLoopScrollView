@@ -328,7 +328,7 @@ typedef NS_OPTIONS(NSUInteger, PDSwitchIndexActionOptions) {
     _timeInterval = 3.f;
     _isSuspended = NO;
     _scrollDirection = PDLoopScrollViewDirectionHorizontal;
-    _shouldLoopWhenSinglePage = NO;
+    _enabledLoopWhenSinglePage = NO;
     _transactionQueue = [[PDSwitchIndexQueue alloc] init];
 }
 
@@ -357,20 +357,14 @@ typedef NS_OPTIONS(NSUInteger, PDSwitchIndexActionOptions) {
 }
 
 - (void)suspend {
-    if (_isSuspended) {
-        return;
-    }
-    
     _isSuspended = YES;
+
     [self.transactionQueue removeAllTransactions];
 }
 
 - (void)resume {
-    if (!_isSuspended) {
-        return;
-    }
-    
     _isSuspended = NO;
+    
     [self repairOffsetIfNeeded];
     [self fire];
 }
@@ -428,7 +422,7 @@ typedef NS_OPTIONS(NSUInteger, PDSwitchIndexActionOptions) {
     if (self.numberOfItems == 0) {
         return;
     }
-    if (self.numberOfItems == 1 && !self.shouldLoopWhenSinglePage) {
+    if (self.numberOfItems == 1 && !self.isEnabledLoopWhenSinglePage) {
         return;
     }
     
@@ -492,7 +486,7 @@ typedef NS_OPTIONS(NSUInteger, PDSwitchIndexActionOptions) {
     if (self.numberOfItems == 0) {
         return 0;
     }
-    if (self.numberOfItems == 1 && !self.shouldLoopWhenSinglePage) {
+    if (self.numberOfItems == 1 && !self.isEnabledLoopWhenSinglePage) {
         return 1;
     }
     
